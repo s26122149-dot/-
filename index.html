@@ -1,0 +1,539 @@
+</main>
+    </div>
+
+</body>
+</html>+TC:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #fdf6fe;
+            --primary-pink: #ff8fa3;
+            --primary-yellow: #ffb703;
+            --primary-purple: #c77dff;
+            --primary-blue: #4ea8de;
+            --text-dark: #4a4e69;<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的程式闖關作品集 | Dev Portfolio</title>
+    <!-- 引入可愛圓潤的 Google 字型 (Fredoka & Noto Sans TC) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans           --card-locked-bg: #e9ecef;
+            --card-locked-border: #ced4da;
+            --card-locked-text: #adb5bd;
+            --font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(#ffccd5 2px, transparent 2px),
+                radial-gradient(#e0aaff 2px, #fdf6fe 2px);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+            color: var(--text-dark);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 背景漂浮裝飾物 (雲朵與閃爍星星) */
+        .bg-element {
+            position: absolute;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        .cloud {
+            background: #ffffff;
+            border-radius: 50px;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.05);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+        }
+
+        .star {
+            font-size: 1.5rem;
+            animation: pulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 0.4; }
+            100% { transform: scale(1.2); opacity: 0.9; }
+        }
+
+        /* 主容器 */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 大頭貼與個人簡介區塊 */
+        .profile-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            border: 4px solid #fff;
+            border-radius: 30px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(255, 143, 163, 0.2);
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+
+        .avatar-wrapper {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1rem;
+        }
+
+        .avatar-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 5px solid var(--primary-pink);
+            background-color: #fff0f3;
+            box-shadow: 0 8px 20px rgba(255, 143, 163, 0.3);
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .avatar-wrapper:hover .avatar-img {
+            transform: scale(1.08) rotate(5deg);
+        }
+
+        .level-badge {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            background: linear-gradient(135deg, #ffb703, #fb8500);
+            color: #fff;
+            font-weight: 700;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 10px rgba(251, 133, 0, 0.4);
+            border: 2px solid #fff;
+        }
+
+        .user-name {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #3d405b;
+            margin-bottom: 0.3rem;
+            letter-spacing: 1px;
+        }
+
+        .user-subtitle {
+            color: #707793;
+            font-size: 0.95rem;
+            margin-bottom: 1.2rem;
+        }
+
+        /* 闖關進度條 */
+        .progress-box {
+            max-width: 400px;
+            margin: 0 auto;
+            background: #f1f1f1;
+            border-radius: 20px;
+            padding: 6px;
+            border: 2px solid #e0e0e0;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 18px;
+            width: 12.5%; /* 2/16 = 12.5% */
+            background: linear-gradient(90deg, #ff8fa3, #ffb703);
+            border-radius: 15px;
+            transition: width 1s ease-in-out;
+            box-shadow: 0 2px 8px rgba(255, 143, 163, 0.5);
+        }
+
+        .progress-text {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #555;
+            margin-top: 0.5rem;
+        }
+
+        /* 16 個關卡網格佈局 */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+
+        /* 關卡卡片通用樣式 */
+        .level-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 150px;
+            border-radius: 24px;
+            padding: 1.2rem;
+            text-decoration: none;
+            position: relative;
+            user-select: none;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .level-number {
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            text-transform: uppercase;
+        }
+
+        .card-icon {
+            font-size: 1.8rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            line-height: 1.3;
+            margin-top: auto;
+        }
+
+        /* === 已解鎖關卡 (Unlocked Styles) === */
+        .level-card.unlocked {
+            background: #ffffff;
+            border: 3px solid #f0f0f0;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05), 0 6px 0px #e2e2e2;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        /* 關卡1主題色彩 */
+        .level-card.w1 {
+            background: linear-gradient(135deg, #ffffff 60%, #fff0f5);
+            border-color: #ffccd5;
+            box-shadow: 0 10px 20px rgba(255, 143, 163, 0.15), 0 6px 0px #ffb3c1;
+        }
+        .level-card.w1 .level-number {
+            background: #ffe5ec;
+            color: #ff4d6d;
+        }
+        .level-card.w1 .card-title { color: #590d22; }
+
+        /* 關卡2主題色彩 */
+        .level-card.w2 {
+            background: linear-gradient(135deg, #ffffff 60%, #f0f8ff);
+            border-color: #bee9e8;
+            box-shadow: 0 10px 20px rgba(98, 182, 203, 0.15), 0 6px 0px #62b6cb;
+        }
+        .level-card.w2 .level-number {
+            background: #e0f4f7;
+            color: #118ab2;
+        }
+        .level-card.w2 .card-title { color: #1d3557; }
+
+        /* 滑光微效 (Shimmer Animation) */
+        .level-card.unlocked::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 45%,
+                rgba(255, 255, 255, 0.6) 50%,
+                transparent 55%
+            );
+            transform: rotate(30deg);
+            transition: all 0.6s;
+            opacity: 0;
+        }
+
+        /* 解鎖關卡 Hover 特效 (3D 浮起與光芒) */
+        .level-card.unlocked:hover {
+            transform: translateY(-8px) scale(1.03);
+        }
+
+        .level-card.w1:hover {
+            box-shadow: 0 18px 30px rgba(255, 143, 163, 0.35), 0 10px 0px #ffb3c1;
+        }
+
+        .level-card.w2:hover {
+            box-shadow: 0 18px 30px rgba(98, 182, 203, 0.35), 0 10px 0px #62b6cb;
+        }
+
+        .level-card.unlocked:hover::before {
+            opacity: 1;
+            left: 100%;
+        }
+
+        /* 點擊壓下質感 */
+        .level-card.unlocked:active {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1), 0 2px 0px #ccc;
+        }
+
+        /* === 未解鎖關卡 (Locked Styles) === */
+        .level-card.locked {
+            background-color: var(--card-locked-bg);
+            border: 3px dashed var(--card-locked-border);
+            color: var(--card-locked-text);
+            cursor: not-allowed;
+            box-shadow: 0 4px 0px #cbd5e1;
+        }
+
+        .level-card.locked .level-number {
+            background: #dee2e6;
+            color: #6c757d;
+        }
+
+        .level-card.locked .card-title {
+            color: #8d99ae;
+        }
+
+        /* 未解鎖關卡 Hover 搖晃效果 (Shake/Wiggle) */
+        .level-card.locked:hover {
+            animation: wiggle 0.4s ease-in-out infinite alternate;
+            border-color: #adb5bd;
+            background-color: #e2e6ea;
+        }
+
+        @keyframes wiggle {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(-3deg) scale(0.98); }
+            75% { transform: rotate(3deg) scale(0.98); }
+            100% { transform: rotate(0deg); }
+        }
+
+        /* Locked 提示氣泡 */
+        .level-card.locked::after {
+            content: "未解鎖";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(50, 50, 50, 0.85);
+            color: #fff;
+            padding: 0.3rem 0.8rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            pointer-events: none;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.27);
+        }
+
+        .level-card.locked:hover::after {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* 響應式斷點設定 */
+        @media (max-width: 900px) {
+            .grid-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 650px) {
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            .level-card {
+                height: 130px;
+                padding: 1rem;
+            }
+            .user-name {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 背景裝飾物 -->
+    <div class="bg-element cloud" style="width: 120px; height: 40px; top: 8%; left: 5%;"></div>
+    <div class="bg-element cloud" style="width: 160px; height: 50px; top: 15%; right: 8%;"></div>
+    <div class="bg-element star" style="top: 12%; left: 20%;">✨</div>
+    <div class="bg-element star" style="top: 25%; right: 22%;">⭐</div>
+
+    <div class="container">
+        <!-- 頂部個人檔案 -->
+        <header class="profile-header">
+            <div class="avatar-wrapper">
+                <!-- 可愛大頭貼預設圖片 (DiceBear Cute Bot/Monster Style) -->
+                <img class="avatar-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=CuteStudent&backgroundColor=b6e3f4" alt="我的大頭貼" onerror="this.src='https://placehold.co/120x120/ffccd5/590d22?text=Avatar'">
+                <div class="level-badge">LV. 2</div>
+            </div>
+            <h1 class="user-name">我的程式闖關作品集</h1>
+            <p class="user-subtitle">網頁程式設計課 ‧ 任務挑戰中 🚀</p>
+
+            <!-- 闖關進度條 -->
+            <div class="progress-box">
+                <div class="progress-bar"></div>
+            </div>
+            <div class="progress-text">關卡解鎖進度：2 / 16 (12.5%)</div>
+        </header>
+
+        <!-- 16 個任務關卡網格 -->
+        <main class="grid-container">
+
+            <!-- 按鈕 1：Week 1 (已解鎖) -->
+            <a href="w1/index.html" class="level-card unlocked w1">
+                <div class="card-header">
+                    <span class="level-number">WEEK 01</span>
+                    <span class="card-icon">🏷️</span>
+                </div>
+                <div class="card-title">Week 1 - 數位名片</div>
+            </a>
+
+            <!-- 按鈕 2：Week 2 (已解鎖) -->
+            <a href="w2/index.html" class="level-card unlocked w2">
+                <div class="card-header">
+                    <span class="level-number">WEEK 02</span>
+                    <span class="card-icon">🍱</span>
+                </div>
+                <div class="card-title">Week 2 - 今天吃甚麼?</div>
+            </a>
+
+            <!-- 按鈕 3 ~ 16：未解鎖狀態 -->
+            <div class="level-card locked">
+                <div class="card-header">
+                    <span class="level-number">WEEK 03</span>
+                    <span class="card-icon">🔒</span>
+                </div>
+                <div class="card-title">Week 3 - 未解鎖</div>
+            </div>
+
+            <div class="level-card locked">
+                <div class="card-header">
+                    <span class="level-number">WEEK 04</span>
+                    <span class="card-icon">🔒</span>
+                </div>
+                <div class="card-title">Week 4 - 未解鎖</div>
+            </div>
+
+            <div class="level-card locked">
+                <div class="card-header">
+                    <span class="level-number">WEEK 05</span>
+                    <span class="card-icon">🔒</span>
+                </div>
+                <div class="card-title">Week 5 - 未解鎖</div>
+            </div>
+
+            <div class="level-card locked">
+                <div class="card-header">
+                    <span class="level-number">WEEK 06</span>
+                    <span class="card-icon">🔒</span>
+                </div>
+                <div class="card-title">Week 6 - 未解鎖</div>
+            </div>
+
+            <div class="level-card locked">
+                <div class="card-header">
+                    <span class="level-number">WEEK 07</span>
+                    <span class="card-icon">🔒</span>
+                </div>
+                <div class="card-title">Week 7 - 未解鎖</div>
+            </div>
+
+            <div class="level-card locked">
+                <div class="card-header">
+                    <span class="level-number">WEEK 08</span>
+                    <span class="card-icon">🔒</span>
+                </div>
+                <div class="card-title">Week 8 - 未解鎖</div>
+            </div>
+
+            <div class="level-card locked">
+                <div class="card-header">
+                    <span class="level-number">WEEK 09</span>
+                    <span class="card-icon">🔒</span>
+                </div>
+                <div class="card-title">Week 9 - 未解鎖</div>
+            </div>
+
+            <div class="level-card locked">
+                <div class="card-header">
+                    <span class="level-number">WEEK 10</span>
+                    <span class="card-icon">🔒</span>
+                </div>
+                <div class="card-title">Week 10 - 未解鎖</div>
+            </div>
+
+            <div class="level-card locked">
+                <div class="card-header">
+                    <span class="level-number">WEEK 11</span>
+                    <span class="card-icon">🔒</span>
+                </div>
+                <div class="card-title">Week 11 - 未解鎖</div>
+            </div>
+
+            <div class="level-card locked">
+                <div class="card-header">
+                    <span class="level-number">WEEK 12</span>
+                    <span class="card-icon">🔒</span>
+                </div>
+                <div class="card-title">Week 12 - 未解鎖</div>
+            </div>
+
+            <div class="level-card locked">
+                <div class="card-header">
+                    <span class="level-number">WEEK 13</span>
+                    <span class="card-icon">🔒</span>
+                </div>
+                <div class="card-title">Week 13 - 未解鎖</div>
+            </div>
+
+            <div class="level-card locked">
+                <div class="card-header">
+                    <span class="level-number">WEEK 14</span>
+                    <span class="card-icon">🔒</span>
+                </div>
+                <div class="card-title">Week 14 - 未解鎖</div>
+            </div>
+
+            <div class="level-card locked">
+                <div class="card-header">
+                    <span class="level-number">WEEK 15</span>
+                    <span class="card-icon">🔒</span>
+                </div>
+                <div class="card-title">Week 15 - 未解鎖</div>
+            </div>
+
+            <div class="level-card locked">
+                <div class="card-header">
+                    <span class="level-number">WEEK 16</span>
+                    <span class="card-icon">🔒</span>
+                </div>
+                <div class="card-title">Week 16 - 未解鎖</div>
+            </div>
