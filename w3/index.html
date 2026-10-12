@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔥 爆笑迷因大師 Meme Master Generator</title>
+  
+  <!-- 引入 Tailwind CSS 快速實作響應式佈局 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- 引入 Google Fonts：Bungee (極具力量感的迷因美式字體) 與 Noto Sans TC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Noto+Sans+TC:wght@700;900&family=Rubik+Marker+Hatch&display=swap" rel="stylesheet">
+  
+  <!-- 引入 html2canvas CDN (截圖下載必備) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    /* 全局背景：高飽和亮黃色搭配俏皮幾何波浪紋 */
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background-color: #ffe600;
+      background-image: radial-gradient(#000000 12%, transparent 12%);
+      background-size: 24px 24px;
+    }
+
+    /* 詼諧迷因字型 Class */
+    .font-bungee {
+      font-family: 'Bungee', 'Noto Sans TC', cursive;
+    }
+    .font-doodle {
+      font-family: 'Rubik Marker Hatch', 'Noto Sans TC', cursive;
+    }
+
+    /* Neubrutalism 新波普風格卡片 (粗黑邊框 + 45度立體厚實陰影) */
+    .neo-card {
+      background-color: #ffffff;
+      border: 4px solid #000000;
+      box-shadow: 8px 8px 0px #000000;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    /* 按鈕微互動：按下時滑順沉入陰影中 */
+    .neo-btn {
+      border: 4px solid #000000;
+      box-shadow: 6px 6px 0px #000000;
+      font-weight: 900;
+      transition: all 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .neo-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 8px 8px 0px #000000;
+    }
+    .neo-btn:active {
+      transform: translate(4px, 4px);
+      box-shadow: 2px 2px 0px #000000;
+    }
+
+    /* 輸入框新波普風格 */
+    .neo-input {
+      border: 3px solid #000000;
+      box-shadow: 4px 4px 0px #000000;
+      outline: none;
+    }
+    .neo-input:focus {
+      background-color: #fffde7;
+      box-shadow: 6px 6px 0px #000000;
+    }
+
+    /* 滑桿風格自訂 */
+    input[type=range] {
+      accent-color: #ff0055;
+    }
+
+    /* 迷因文字 360 度立體粗描邊：確保在任何底圖上都清晰亮眼 */
+    .meme-text-stroke {
+      font-family: 'Impact', 'Bungee', 'Noto Sans TC', sans-serif;
+      font-weight: 900;
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      line-height: 1.2;
+      /* 多重黑邊與重陰影效果 */
+      text-shadow:
+        -4px -4px 0 #000,
+         4px -4px 0 #000,
+        -4px  4px 0 #000,
+         4px  4px 0 #000,
+        -5px  0px 0 #000,
+         5px  0px 0 #000,
+         0px -5px 0 #000,
+         0px  5px 0 #000,
+         0px 8px 15px rgba(0, 0, 0, 0.8);
+      word-break: break-word;
+    }
+
+    /* 彩色裝飾徽章 */
+    .badge-pop {
+      border: 3px solid #000;
+      box-shadow: 3px 3px 0px #000;
+      transform: rotate(-3deg);
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 text-black selection:bg-pink-500 selection:text-white">
+
+  <!-- 頁面標題區塊 -->
+  <header class="max-w-6xl mx-auto mb-8">
+    <div class="neo-card bg-[#00f0ff] p-5 md:p-7 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-4">
+        <!-- 跑馬燈感標籤Icon -->
+        <div class="w-16 h-16 bg-[#ff0055] text-white flex items-center justify-center font-black text-3xl rounded-xl border-4 border-black shadow-[4px_4px_0px_#000] rotate-[-6deg] animate-bounce">
+          🤪
+        </div>
+        <div>
+          <h1 class="text-3xl md:text-5xl font-black font-bungee tracking-wider text-black">
+            爆笑迷因製造機
+          </h1>
+          <p class="text-xs md:text-sm font-bold text-black bg-white inline-block px-2 py-0.5 rounded border-2 border-black mt-2">
+            ⚡ 快樂是免費的，迷因也是！支援一鍵打包下載 ⚡
+          </p>
+        </div>
+      </div>
+
+      <!-- 右側裝飾小標籤 -->
+      <div class="badge-pop bg-[#ff0055] text-white font-black px-4 py-2 rounded-xl text-center">
+        <span class="text-xs block">CURRENT STATUS</span>
+        <span class="text-sm md:text-base font-bungee">MEME OVERLOAD 🚀</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主要工作區 (桌機雙欄 / 手機上下單欄) -->
+  <main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+    <!-- ==================== 左側：控制面板 ==================== -->
+    <section class="lg:col-span-5 neo-card bg-[#ffffff] rounded-2xl p-6 flex flex-col gap-6">
+      
+      <!-- 區塊標題 -->
+      <div class="border-b-4 border-black pb-3 flex justify-between items-center">
+        <h2 class="text-xl font-black flex items-center gap-2 font-bungee">
+          <span>🛠️</span> 創作控制台
+        </h2>
+        <span class="bg-[#7000ff] text-white text-xs font-bold px-3 py-1 rounded-full border-2 border-black">
+          STEP 1
+        </span>
+      </div>
+
+      <!-- 1. 本機圖片上傳 (FileReader，避免 CORS 錯誤) -->
+      <div class="flex flex-col gap-2">
+        <label for="image-upload" class="font-black text-sm flex items-center gap-2">
+          <span>🖼️</span> 選擇底圖 (支援 PNG / JPG)：
+        </label>
+        <input 
+          type="file" 
+          id="image-upload" 
+          accept="image/*"
+          class="block w-full text-sm font-bold text-black
+                 file:mr-4 file:py-2.5 file:px-4
+                 file:rounded-xl file:border-3 file:border-black
+                 file:text-sm file:font-black
+                 file:bg-[#ff0055] file:text-white
+                 hover:file:bg-[#d60047] cursor-pointer neo-input rounded-xl p-2 bg-gray-50"
+        />
+        <span class="text-[11px] font-bold text-gray-500">💡 提示：點擊按鈕選取本地圖片，絕不傳輸至遠端伺服器！</span>
+      </div>
+
+      <!-- 2. 上方文字輸入 -->
+      <div class="flex flex-col gap-2">
+        <label for="top-text-input" class="font-black text-sm flex items-center gap-1">
+          <span>⬆️</span> 上方梗文 (Top Text)：
+        </label>
+        <input 
+          type="text" 
+          id="top-text-input" 
+          value="當你終於把 Bug 修正好"
+          placeholder="輸入上方文字..."
+          class="w-full p-3 neo-input rounded-xl font-black text-base text-black"
+        >
+      </div>
+
+      <!-- 3. 下方文字輸入 -->
+      <div class="flex flex-col gap-2">
+        <label for="bottom-text-input" class="font-black text-sm flex items-center gap-1">
+          <span>⬇️</span> 下方梗文 (Bottom Text)：
+        </label>
+        <input 
+          type="text" 
+          id="bottom-text-input" 
+          value="結果發現是改到了需求文件"
+          placeholder="輸入下方文字..."
+          class="w-full p-3 neo-input rounded-xl font-black text-base text-black"
+        >
+      </div>
+
+      <!-- 4. 參數滑桿微調區 -->
+      <div class="space-y-4 bg-[#fffde7] p-4 rounded-xl border-3 border-black shadow-[4px_4px_0px_#000]">
+        <h3 class="font-black text-xs uppercase tracking-wider text-black flex items-center gap-1">
+          <span>🎛️</span> 文字參數極速微調
+        </h3>
+        
+        <!-- 字體大小滑桿 -->
+        <div>
+          <div class="flex justify-between text-xs font-black mb-1">
+            <span>🔤 字體大小</span>
+            <span id="font-size-val" class="bg-[#00f0ff] px-2 py-0.5 rounded border border-black">36px</span>
+          </div>
+          <input type="range" id="font-size-slider" min="16" max="72" value="36" class="w-full h-3 bg-white rounded-lg border-2 border-black cursor-pointer">
+        </div>
+
+        <!-- 上方文字垂直位置滑桿 -->
+        <div>
+          <div class="flex justify-between text-xs font-black mb-1">
+            <span>📐 上方距離 (Top Gap)</span>
+            <span id="top-pos-val" class="bg-[#00f0ff] px-2 py-0.5 rounded border border-black">16px</span>
+          </div>
+          <input type="range" id="top-pos-slider" min="0" max="150" value="16" class="w-full h-3 bg-white rounded-lg border-2 border-black cursor-pointer">
+        </div>
+
+        <!-- 下方文字垂直位置滑桿 -->
+        <div>
+          <div class="flex justify-between text-xs font-black mb-1">
+            <span>📐 下方距離 (Bottom Gap)</span>
+            <span id="bottom-pos-val" class="bg-[#00f0ff] px-2 py-0.5 rounded border border-black">16px</span>
+          </div>
+          <input type="range" id="bottom-pos-slider" min="0" max="150" value="16" class="w-full h-3 bg-white rounded-lg border-2 border-black cursor-pointer">
+        </div>
+      </div>
+
+      <!-- 5. 一鍵下載按鈕 -->
+      <div class="mt-auto pt-2">
+        <button 
+          id="download-btn"
+          class="neo-btn w-full bg-[#ff0055] hover:bg-[#e6004c] text-white py-4 px-6 rounded-2xl flex items-center justify-center gap-3 text-xl tracking-wider font-bungee"
+        >
+          <span class="text-3xl">💣</span>
+          <span>爆笑下載 (my-meme.png)</span>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- ==================== 右側：迷因即時預覽區 ==================== -->
+    <section class="lg:col-span-7 flex flex-col gap-6">
+      
+      <!-- 預覽區標頭 -->
+      <div class="neo-card bg-[#ffffff] p-4 rounded-2xl flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl">👀</span>
+          <div>
+            <h2 class="font-black text-lg font-bungee">即時迷因預覽區</h2>
+            <p class="text-xs font-bold text-gray-500">所見即所得，準備分享給朋友吧！</p>
+          </div>
+        </div>
+        <span class="bg-[#00ff66] font-black text-xs px-3 py-1.5 rounded-full border-2 border-black">
+          LIVE PREVIEW
+        </span>
+      </div>
+
+      <!-- 迷因畫布外框 (此區域將會被截圖輸出) -->
+      <div class="neo-card bg-[#111111] p-3 md:p-6 rounded-2xl flex justify-center items-center min-h-[380px] md:min-h-[520px]">
+        
+        <!-- 截圖目標區塊 -->
+        <div 
+          id="meme-preview-area" 
+          class="relative overflow-hidden bg-black rounded-xl shadow-2xl flex items-center justify-center max-w-full"
+          style="min-width: 280px; min-height: 280px;"
+        >
+          <!-- 預設搞笑底圖 (由 Unsplash 提供，使用者也可自主更換) -->
+          <img 
+            id="meme-image-display" 
+            src="https://images.unsplash.com/photo-1533738363-b7f9aef128ce?auto=format&fit=crop&w=800&q=80" 
+            alt="迷因底圖" 
+            class="max-w-full max-h-[550px] object-contain block mx-auto select-none"
+          />
+
+          <!-- 1. 上方迷因文字層 -->
+          <div 
+            id="preview-top-text" 
+            class="absolute top-4 inset-x-0 text-center px-4 pointer-events-none meme-text-stroke"
+            style="font-size: 36px;"
+          >
+            當你終於把 Bug 修正好
+          </div>
+
+          <!-- 2. 下方迷因文字層 -->
+          <div 
+            id="preview-bottom-text" 
+            class="absolute bottom-4 inset-x-0 text-center px-4 pointer-events-none meme-text-stroke"
+            style="font-size: 36px;"
+          >
+            結果發現是改到了需求文件
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- 頁尾迷因提示金句 -->
+      <div class="neo-card bg-[#00ff66] p-4 rounded-2xl text-xs font-black flex justify-between items-center">
+        <span>🎉 迷因大師提示：文字越精簡，好笑程度翻倍！</span>
+        <span class="hidden sm:inline bg-black text-white px-2 py-0.5 rounded">#MemeMaster</span>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ==================== JavaScript 邏輯控制區 ==================== -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // 【1. 取得 DOM 元素】
+      const imageUploadInput = document.getElementById('image-upload');
+      const topTextInput = document.getElementById('top-text-input');
+      const bottomTextInput = document.getElementById('bottom-text-input');
+      
+      const fontSizeSlider = document.getElementById('font-size-slider');
+      const topPosSlider = document.getElementById('top-pos-slider');
+      const bottomPosSlider = document.getElementById('bottom-pos-slider');
+
+      const fontSizeVal = document.getElementById('font-size-val');
+      const topPosVal = document.getElementById('top-pos-val');
+      const bottomPosVal = document.getElementById('bottom-pos-val');
+
+      const previewImage = document.getElementById('meme-image-display');
+      const previewTopText = document.getElementById('preview-top-text');
+      const previewBottomText = document.getElementById('preview-bottom-text');
+      
+      const memePreviewArea = document.getElementById('meme-preview-area');
+      const downloadBtn = document.getElementById('download-btn');
+
+
+      // 【2. 本機圖片上傳處理 (FileReader，完全避開 CORS 錯誤)】
+      imageUploadInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        
+        if (file) {
+          // 建立 FileReader 來讀取本地圖片檔
+          const reader = new FileReader();
+
+          reader.onload = function(event) {
+            // 讀取成功後，將預覽圖片來源設定為 Data URL (Base64)
+            previewImage.src = event.target.result;
+          };
+
+          // 將檔案轉成 Data URL 讀取
+          reader.readAsDataURL(file);
+        }
+      });
+
+
+      // 【3. 雙層文字即時同步更新】
+      topTextInput.addEventListener('input', () => {
+        previewTopText.innerText = topTextInput.value;
+      });
+
+      bottomTextInput.addEventListener('input', () => {
+        previewBottomText.innerText = bottomTextInput.value;
+      });
+
+
+      // 【4. 滑桿控制文字參數】
+      // 字體大小控制
+      fontSizeSlider.addEventListener('input', () => {
+        const sizePx = fontSizeSlider.value + 'px';
+        previewTopText.style.fontSize = sizePx;
+        previewBottomText.style.fontSize = sizePx;
+        fontSizeVal.innerText = sizePx;
+      });
+
+      // 上方文字距離頂部控制
+      topPosSlider.addEventListener('input', () => {
+        const topPx = topPosSlider.value + 'px';
+        previewTopText.style.top = topPx;
+        topPosVal.innerText = topPx;
+      });
+
+      // 下方文字距離底部控制
+      bottomPosSlider.addEventListener('input', () => {
+        const bottomPx = bottomPosSlider.value + 'px';
+        previewBottomText.style.bottom = bottomPx;
+        bottomPosVal.innerText = bottomPx;
+      });
+
+
+      // 【5. 一鍵截圖下載功能 (html2canvas)】
+      downloadBtn.addEventListener('click', () => {
+        // 變更按鈕狀態
+        const originalBtnHTML = downloadBtn.innerHTML;
+        downloadBtn.innerHTML = `<span class="animate-spin">🌀</span> 正在生成圖片...`;
+        downloadBtn.disabled = true;
+
+        // 使用 html2canvas 捕捉 #meme-preview-area
+        html2canvas(memePreviewArea, {
+          scale: 2, // 2倍高畫質渲染
+          useCORS: true, // 允許跨域圖片繪製
+          backgroundColor: null
+        }).then(canvas => {
+          // 將 Canvas 轉換為 PNG 圖檔 URL
+          const imageDataUrl = canvas.toDataURL('image/png');
+
+          // 動態建立下載連結
+          const downloadLink = document.createElement('a');
+          downloadLink.href = imageDataUrl;
+          downloadLink.download = 'my-meme.png'; // 檔名設定為 my-meme.png
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+
+          // 恢復按鈕狀態
+          downloadBtn.innerHTML = originalBtnHTML;
+          downloadBtn.disabled = false;
+        }).catch(error => {
+          console.error("迷因下載失敗：", error);
+          alert("下載圖片時發生錯誤，請重新嘗試！");
+          downloadBtn.innerHTML = originalBtnHTML;
+          downloadBtn.disabled = false;
+        });
+      });
+
+    });
+  </script>
+</body>
+</html>
