@@ -265,6 +265,19 @@
             color: #9333ea;
         }
         .level-card.w3 .card-title { color: #3b0764; }
+
+        /* === 關卡4主題色彩 */
+        .level-card.w4 {
+            background: linear-gradient(135deg, #ffffff 60%, #fffbe6);
+            border-color: #ffe58f;
+            box-shadow: 0 10px 20px rgba(255, 183, 3, 0.18), 0 6px 0px #ffd666;
+        }
+        .level-card.w4 .level-number {
+            background: #fff1b8;
+            color: #d48806;
+        }
+        .level-card.w4 .card-title { color: #614700;
+        }
         
         /* 滑光微效 (Shimmer Animation) */
         .level-card.unlocked::before {
@@ -300,6 +313,10 @@
 
         .level-card.w3:hover {
             box-shadow: 0 18px 30px rgba(199, 125, 255, 0.35), 0 10px 0px #c084fc;
+        }
+        
+        .level-card.w4:hover {
+            box-shadow: 0 18px 30px rgba(255, 183, 3, 0.38), 0 10px 0px #ffd666;
         }
         
         .level-card.unlocked:hover::before {
@@ -408,16 +425,16 @@
             <div class="avatar-wrapper">
                 <!-- 可愛大頭貼預設圖片 (DiceBear Cute Bot/Monster Style) -->
                 <img class="avatar-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=CuteStudent&backgroundColor=b6e3f4" alt="我的大頭貼" onerror="this.src='https://placehold.co/120x120/ffccd5/590d22?text=Avatar'">
-                <div class="level-badge">LV. 3</div>
+                <div class="level-badge">LV. 4</div>
             </div>
             <h1 class="user-name">我的程式闖關作品集</h1>
             <p class="user-subtitle">網頁程式設計課 ‧ 任務挑戰中 🚀</p>
 
             <!-- 闖關進度條 -->
             <div class="progress-box">
-                <div class="progress-bar" style="width: 18.75%;"></div>
+                <div class="progress-bar" style="width: 25%;"></div>
             </div>
-            <div class="progress-text">關卡解鎖進度：3 / 16 (18.75%)</div>
+            <div class="progress-text">關卡解鎖進度：4 / 16 (25%)</div>
         </header>
 
         <!-- 16 個任務關卡網格 -->
@@ -450,15 +467,16 @@
                 <div class="card-title">Week 3 - 迷音圖產生器</div>
             </a>
 
-            <!-- 按鈕 4 ~ 16：未解鎖狀態 -->
-            <div class="level-card locked">
+            <!-- 按鈕 4：Week 04 (已解鎖) -->
+            <a href="w4/index.html" class="level-card unlocked w4">
                 <div class="card-header">
                     <span class="level-number">WEEK 04</span>
-                    <span class="card-icon">🔒</span>
+                    <span class="card-icon">📢</span>
                 </div>
-                <div class="card-title">Week 4 - 未解鎖</div>
-            </div>
+                <div class="card-title">Week 4 - 悄悄話</div>
+            </a>
 
+            <!-- 按鈕 5 ~ 16：未解鎖狀態 -->
             <div class="level-card locked">
                 <div class="card-header">
                     <span class="level-number">WEEK 05</span>
