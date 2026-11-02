@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>個人數位名片</title>
+    <!-- 引入 Google 字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS 樣式區塊 -->
+    <style>
+        /* 全域設定 (奶茶色系主調) */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+
+        body {
+            /* 燕麥奶茶色背景 */
+            background-color: #F4EBE1; 
+            display: flex;
+            justify-content: center; /* 水平置中 */
+            align-items: center;     /* 垂直置中 */
+            min-height: 100vh;        /* 畫面滿版 */
+            padding: 20px;
+        }
+
+        /* 名片卡片主體 */
+        .card {
+            background-color: #FAF6F0; /* 卡片溫暖奶白色 */
+            width: 100%;
+            max-width: 350px;
+            padding: 40px 30px;
+            border-radius: 24px;
+            text-align: center;
+            
+            /* 微陰影效果 */
+            box-shadow: 0 10px 30px rgba(163, 144, 129, 0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* 懸浮效果 */
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(163, 144, 129, 0.25);
+        }
+
+        /* 圓形大頭貼 */
+        .avatar {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 20px;
+            border: 4px solid #FFFFFF;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .avatar:hover {
+            transform: scale(1.05); /* 滑鼠移上去大頭貼微放大 */
+        }
+
+        /* 名字與簡介 */
+        .name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #5C4B43;
+            margin-bottom: 8px;
+        }
+
+        .bio {
+            font-size: 0.95rem;
+            color: #8C7A6B;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        /* 按鈕區塊 */
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            display: block;
+            padding: 12px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Instagram 按鈕：深奶茶色 */
+        .btn-instagram {
+            background-color: #AB947E;
+            color: #FFFFFF;
+            box-shadow: 0 4px 12px rgba(171, 148, 126, 0.3);
+        }
+
+        .btn-instagram:hover {
+            background-color: #967E68;
+            box-shadow: 0 6px 15px rgba(171, 148, 126, 0.4);
+        }
+
+        /* Email 按鈕：奶白色框線按鈕 */
+        .btn-email {
+            background-color: #FFFFFF;
+            color: #7A6858;
+            border: 1.5px solid #D6C7B7;
+        }
+
+        .btn-email:hover {
+            background-color: #EFE8E0;
+            color: #5C4B43;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 名片卡片 -->
+    <div class="card">
+        <!-- 圓形大頭貼 -->
+        <img id="avatarImg" src="https://i.postimg.cc/nLYBdMd3/IMG-4449.jpg" alt="個人大頭貼" class="avatar">
+        
+        <!-- 名字與簡介 -->
+        <h1 class="name">潘宥瑜</h1>
+        <p class="bio">樹德科技大學 餐旅烘焙系一年級</p>
+        
+        <!-- 按鈕連結 -->
+        <div class="button-group">
+            <a href="https://www.instagram.com/y_u.uri?mdxt=bHg2bTFpaDA4bTBi&utm_source=qr" target="_blank" class="btn btn-instagram">Instagram</a>
+            <a href="mailto:s26122149@stu.edu.tw" class="btn btn-email">Email 聯絡我</a>
+        </div>
+    </div>
+
+    <!-- JavaScript 腳本區塊 (可加入互動功能) -->
+    <script>
+        // 範例 JS：點擊大頭貼時彈出招呼語
+        const avatar = document.getElementById('avatarImg');
+        avatar.addEventListener('click', () => {
+            alert('你好！歡迎來到我的個人名片 ☕️');
+        });
+    </script>
+</body>
+</html>
