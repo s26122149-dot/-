@@ -17,6 +17,7 @@
             --primary-purple: #b5a7be;      /* 煙燻香芋紫 */
             --primary-blue: #9bb1bd;        /* 霧霾灰藍 */
             --primary-green: #a3b18a;       /* 鼠尾草綠 */
+            --primary-teal: #9ab8b5;        /* 海鹽灰青 */
             --text-dark: #4a4a48;           /* 炭灰深褐 */
             --text-muted: #7f7f7a;          /* 暖灰次要文字 */
             --card-locked-bg: #e6e3dc;      /* 鎖定卡片底色 */
@@ -290,6 +291,18 @@
             color: #637552;
         }
         .level-card.w5 .card-title { color: #3f4a34; }
+
+        /* 關卡6主題色彩：海鹽灰青 */
+        .level-card.w6 {
+            background: linear-gradient(135deg, #fcfaf7 55%, #e4eeed);
+            border-color: #bdd1cf;
+            box-shadow: 0 10px 20px rgba(154, 184, 181, 0.18), 0 6px 0px #9fbab7;
+        }
+        .level-card.w6 .level-number {
+            background: #dce8e7;
+            color: #547875;
+        }
+        .level-card.w6 .card-title { color: #364f4d; }
         
         /* 滑光微效 (Shimmer Animation) */
         .level-card.unlocked::before {
@@ -333,6 +346,10 @@
         
         .level-card.w5:hover {
             box-shadow: 0 18px 30px rgba(163, 177, 138, 0.3), 0 10px 0px #a7b897;
+        }
+
+        .level-card.w6:hover {
+            box-shadow: 0 18px 30px rgba(154, 184, 181, 0.32), 0 10px 0px #9fbab7;
         }
         
         .level-card.unlocked:hover::before {
@@ -441,16 +458,16 @@
             <div class="avatar-wrapper">
                 <!-- 大頭貼背景也同步調整為莫蘭迪霧藍 (#c5d5dc) -->
                 <img class="avatar-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=CuteStudent&backgroundColor=c5d5dc" alt="我的大頭貼" onerror="this.src='https://placehold.co/120x120/dec3c3/664444?text=Avatar'">
-                <div class="level-badge">LV. 5</div>
+                <div class="level-badge">LV. 6</div>
             </div>
             <h1 class="user-name">我的程式闖關作品集</h1>
             <p class="user-subtitle">網頁程式設計課 ‧ 任務挑戰中 🚀</p>
 
             <!-- 闖關進度條 -->
             <div class="progress-box">
-                <div class="progress-bar" style="width: 31.25%;"></div>
+                <div class="progress-bar" style="width: 37.5%;"></div>
             </div>
-            <div class="progress-text">關卡解鎖進度：5 / 16 (31.25%)</div>
+            <div class="progress-text">關卡解鎖進度：6 / 16 (37.5%)</div>
         </header>
 
         <!-- 16 個任務關卡網格 -->
@@ -500,16 +517,17 @@
                 </div>
                 <div class="card-title">Week 5 - 雲端心電感應</div>
             </a>
-            
-            <!-- 按鈕 6 ~ 16：未解鎖狀態 -->
-            <div class="level-card locked">
+
+            <!-- 按鈕 6：Week 06 (已解鎖) -->
+            <a href="w6/index.html" class="level-card unlocked w6">
                 <div class="card-header">
                     <span class="level-number">WEEK 06</span>
-                    <span class="card-icon">🔒</span>
+                    <span class="card-icon">📷</span>
                 </div>
-                <div class="card-title">Week 6 - 未解鎖</div>
-            </div>
-
+                <div class="card-title">Week 6 - 拍照二選一</div>
+            </a>
+            
+            <!-- 按鈕 7 ~ 16：未解鎖狀態 -->
             <div class="level-card locked">
                 <div class="card-header">
                     <span class="level-number">WEEK 07</span>
