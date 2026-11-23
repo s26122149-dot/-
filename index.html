@@ -1,17 +1,4 @@
-</main>
-    </div>
-
-</body>
-</html>
-    
-    <style>
-        :root {
-            --bg-color: #fdf6fe;
-            --primary-pink: #ff8fa3;
-            --primary-yellow: #ffb703;
-            --primary-purple: #c77dff;
-            --primary-blue: #4ea8de;
-            --text-dark: #4a4e69;<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -20,9 +7,21 @@
     <!-- 引入可愛圓潤的 Google 字型 (Fredoka & Noto Sans TC) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans           --card-locked-bg: #e9ecef;
-            --card-locked-border: #ced4da;
-            --card-locked-text: #adb5bd;
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* 莫蘭迪色系變數設定 */
+            --bg-color: #f4f1ea;            /* 燕麥奶底色 */
+            --primary-pink: #d4a3a3;        /* 乾燥玫瑰粉 */
+            --primary-yellow: #d9b88f;      /* 燕麥暖杏 */
+            --primary-purple: #b5a7be;      /* 煙燻香芋紫 */
+            --primary-blue: #9bb1bd;        /* 霧霾灰藍 */
+            --primary-green: #a3b18a;       /* 鼠尾草綠 */
+            --text-dark: #4a4a48;           /* 炭灰深褐 */
+            --text-muted: #7f7f7a;          /* 暖灰次要文字 */
+            --card-locked-bg: #e6e3dc;      /* 鎖定卡片底色 */
+            --card-locked-border: #cbc6bc;  /* 鎖定卡片邊框 */
+            --card-locked-text: #9e9a90;    /* 鎖定卡片文字 */
             --font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
         }
 
@@ -36,8 +35,8 @@
             font-family: var(--font-family);
             background-color: var(--bg-color);
             background-image: 
-                radial-gradient(#ffccd5 2px, transparent 2px),
-                radial-gradient(#e0aaff 2px, #fdf6fe 2px);
+                radial-gradient(#dfd7ce 2px, transparent 2px),
+                radial-gradient(#d5d8d0 2px, #f4f1ea 2px);
             background-size: 40px 40px;
             background-position: 0 0, 20px 20px;
             color: var(--text-dark);
@@ -52,13 +51,13 @@
             position: absolute;
             pointer-events: none;
             z-index: 0;
-            opacity: 0.6;
+            opacity: 0.65;
         }
 
         .cloud {
-            background: #ffffff;
+            background: #fcfaf7;
             border-radius: 50px;
-            box-shadow: 0 8px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 8px 15px rgba(74, 74, 72, 0.05);
             animation: float 6s ease-in-out infinite;
         }
 
@@ -69,12 +68,13 @@
 
         .star {
             font-size: 1.5rem;
+            filter: saturate(0.5); /* 降低 emoji 彩度以融入莫蘭迪風格 */
             animation: pulse 2s ease-in-out infinite alternate;
         }
 
         @keyframes pulse {
             0% { transform: scale(0.8); opacity: 0.4; }
-            100% { transform: scale(1.2); opacity: 0.9; }
+            100% { transform: scale(1.15); opacity: 0.85; }
         }
 
         /* 主容器 */
@@ -87,13 +87,13 @@
 
         /* 大頭貼與個人簡介區塊 */
         .profile-header {
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(252, 250, 247, 0.88);
             backdrop-filter: blur(8px);
-            border: 4px solid #fff;
+            border: 4px solid #ffffff;
             border-radius: 30px;
             padding: 2rem;
             text-align: center;
-            box-shadow: 0 15px 35px rgba(255, 143, 163, 0.2);
+            box-shadow: 0 15px 35px rgba(138, 129, 124, 0.12);
             margin-bottom: 2.5rem;
             position: relative;
         }
@@ -110,8 +110,8 @@
             height: 100%;
             border-radius: 50%;
             border: 5px solid var(--primary-pink);
-            background-color: #fff0f3;
-            box-shadow: 0 8px 20px rgba(255, 143, 163, 0.3);
+            background-color: #ebe4e2;
+            box-shadow: 0 8px 20px rgba(212, 163, 163, 0.25);
             object-fit: cover;
             transition: transform 0.3s ease;
         }
@@ -124,26 +124,26 @@
             position: absolute;
             bottom: -5px;
             right: -5px;
-            background: linear-gradient(135deg, #ffb703, #fb8500);
+            background: linear-gradient(135deg, #c9a679, #b58d5d);
             color: #fff;
             font-weight: 700;
             padding: 0.3rem 0.8rem;
             border-radius: 20px;
             font-size: 0.85rem;
-            box-shadow: 0 4px 10px rgba(251, 133, 0, 0.4);
-            border: 2px solid #fff;
+            box-shadow: 0 4px 10px rgba(181, 141, 93, 0.35);
+            border: 2px solid #fcfaf7;
         }
 
         .user-name {
             font-size: 1.8rem;
             font-weight: 900;
-            color: #3d405b;
+            color: #464644;
             margin-bottom: 0.3rem;
             letter-spacing: 1px;
         }
 
         .user-subtitle {
-            color: #707793;
+            color: var(--text-muted);
             font-size: 0.95rem;
             margin-bottom: 1.2rem;
         }
@@ -152,26 +152,26 @@
         .progress-box {
             max-width: 400px;
             margin: 0 auto;
-            background: #f1f1f1;
+            background: #eae6df;
             border-radius: 20px;
             padding: 6px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid #dcd7ce;
             position: relative;
         }
 
         .progress-bar {
             height: 18px;
-            width: 12.5%; /* 2/16 = 12.5% */
-            background: linear-gradient(90deg, #ff8fa3, #ffb703);
+            width: 31.25%;
+            background: linear-gradient(90deg, #d4a3a3, #c9a679);
             border-radius: 15px;
             transition: width 1s ease-in-out;
-            box-shadow: 0 2px 8px rgba(255, 143, 163, 0.5);
+            box-shadow: 0 2px 8px rgba(212, 163, 163, 0.4);
         }
 
         .progress-text {
             font-size: 0.85rem;
             font-weight: 700;
-            color: #555;
+            color: #6b6862;
             margin-top: 0.5rem;
         }
 
@@ -212,6 +212,7 @@
 
         .card-icon {
             font-size: 1.8rem;
+            filter: saturate(0.75); /* 讓圖示色彩更柔和 */
         }
 
         .card-title {
@@ -223,75 +224,72 @@
 
         /* === 已解鎖關卡 (Unlocked Styles) === */
         .level-card.unlocked {
-            background: #ffffff;
-            border: 3px solid #f0f0f0;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05), 0 6px 0px #e2e2e2;
+            background: #fcfaf7;
+            border: 3px solid #eae6df;
+            box-shadow: 0 10px 20px rgba(74, 74, 72, 0.05), 0 6px 0px #dcd7ce;
             cursor: pointer;
             overflow: hidden;
         }
 
-        /* 關卡1主題色彩 */
+        /* 關卡1主題色彩：乾燥玫瑰粉 */
         .level-card.w1 {
-            background: linear-gradient(135deg, #ffffff 60%, #fff0f5);
-            border-color: #ffccd5;
-            box-shadow: 0 10px 20px rgba(255, 143, 163, 0.15), 0 6px 0px #ffb3c1;
+            background: linear-gradient(135deg, #fcfaf7 55%, #f3e6e6);
+            border-color: #dec3c3;
+            box-shadow: 0 10px 20px rgba(212, 163, 163, 0.16), 0 6px 0px #cfaaaa;
         }
         .level-card.w1 .level-number {
-            background: #ffe5ec;
-            color: #ff4d6d;
+            background: #eedcdc;
+            color: #9e6b6b;
         }
-        .level-card.w1 .card-title { color: #590d22; }
+        .level-card.w1 .card-title { color: #664444; }
 
-        /* 關卡2主題色彩 */
+        /* 關卡2主題色彩：霧霾灰藍 */
         .level-card.w2 {
-            background: linear-gradient(135deg, #ffffff 60%, #f0f8ff);
-            border-color: #bee9e8;
-            box-shadow: 0 10px 20px rgba(98, 182, 203, 0.15), 0 6px 0px #62b6cb;
+            background: linear-gradient(135deg, #fcfaf7 55%, #e5ecef);
+            border-color: #bfd0d6;
+            box-shadow: 0 10px 20px rgba(155, 177, 189, 0.16), 0 6px 0px #a2b8c2;
         }
         .level-card.w2 .level-number {
-            background: #e0f4f7;
-            color: #118ab2;
+            background: #dce6ea;
+            color: #5c7a87;
         }
-        .level-card.w2 .card-title { color: #1d3557; }
+        .level-card.w2 .card-title { color: #3d5159; }
 
-        /* 關卡3主題色彩 */
+        /* 關卡3主題色彩：煙燻香芋紫 */
         .level-card.w3 {
-            background: linear-gradient(135deg, #ffffff 60%, #f3e8ff);
-            border-color: #d8b4fe;
-            box-shadow: 0 10px 20px rgba(199, 125, 255, 0.15), 0 6px 0px #c084fc;
+            background: linear-gradient(135deg, #fcfaf7 55%, #ece8f0);
+            border-color: #cbc2d4;
+            box-shadow: 0 10px 20px rgba(181, 167, 190, 0.16), 0 6px 0px #b3a5bf;
         }
         .level-card.w3 .level-number {
-            background: #f3e8ff;
-            color: #9333ea;
+            background: #e4deeb;
+            color: #786787;
         }
-        .level-card.w3 .card-title { color: #3b0764; }
+        .level-card.w3 .card-title { color: #4d4257; }
 
-        /* === 關卡4主題色彩 */
+        /* 關卡4主題色彩：燕麥暖杏 */
         .level-card.w4 {
-            background: linear-gradient(135deg, #ffffff 60%, #fffbe6);
-            border-color: #ffe58f;
-            box-shadow: 0 10px 20px rgba(255, 183, 3, 0.18), 0 6px 0px #ffd666;
+            background: linear-gradient(135deg, #fcfaf7 55%, #f4ede2);
+            border-color: #dfcfb8;
+            box-shadow: 0 10px 20px rgba(217, 184, 143, 0.18), 0 6px 0px #cbb598;
         }
         .level-card.w4 .level-number {
-            background: #fff1b8;
-            color: #d48806;
+            background: #ede2d1;
+            color: #967850;
         }
-        .level-card.w4 .card-title { color: #614700;
-        }
+        .level-card.w4 .card-title { color: #5e4b32; }
         
-        /* === 關卡5主題色彩 */
+        /* 關卡5主題色彩：鼠尾草綠 */
         .level-card.w5 {
-            background: linear-gradient(135deg, #ffffff 60%, #e6f7ff);
-            background: linear-gradient(135deg, #ffffff 60%, #f6ffed);
-            border-color: #b7eb8f;
-            box-shadow: 0 10px 20px rgba(82, 196, 26, 0.18), 0 6px 0px #95de64;
+            background: linear-gradient(135deg, #fcfaf7 55%, #e8ede3);
+            border-color: #c2ceb6;
+            box-shadow: 0 10px 20px rgba(163, 177, 138, 0.18), 0 6px 0px #a7b897;
         }
         .level-card.w5 .level-number {
-            background: #d9f7be;
-            color: #389e0d;
+            background: #dfe6d8;
+            color: #637552;
         }
-        .level-card.w5 .card-title { color: #135200;
-        }
+        .level-card.w5 .card-title { color: #3f4a34; }
         
         /* 滑光微效 (Shimmer Animation) */
         .level-card.unlocked::before {
@@ -304,7 +302,7 @@
             background: linear-gradient(
                 45deg,
                 transparent 45%,
-                rgba(255, 255, 255, 0.6) 50%,
+                rgba(255, 255, 255, 0.55) 50%,
                 transparent 55%
             );
             transform: rotate(30deg);
@@ -312,29 +310,29 @@
             opacity: 0;
         }
 
-        /* 解鎖關卡 Hover 特效 (3D 浮起與光芒) */
+        /* 解鎖關卡 Hover 特效 */
         .level-card.unlocked:hover {
             transform: translateY(-8px) scale(1.03);
         }
 
         .level-card.w1:hover {
-            box-shadow: 0 18px 30px rgba(255, 143, 163, 0.35), 0 10px 0px #ffb3c1;
+            box-shadow: 0 18px 30px rgba(212, 163, 163, 0.3), 0 10px 0px #cfaaaa;
         }
 
         .level-card.w2:hover {
-            box-shadow: 0 18px 30px rgba(98, 182, 203, 0.35), 0 10px 0px #62b6cb;
+            box-shadow: 0 18px 30px rgba(155, 177, 189, 0.3), 0 10px 0px #a2b8c2;
         }
 
         .level-card.w3:hover {
-            box-shadow: 0 18px 30px rgba(199, 125, 255, 0.35), 0 10px 0px #c084fc;
+            box-shadow: 0 18px 30px rgba(181, 167, 190, 0.3), 0 10px 0px #b3a5bf;
         }
         
         .level-card.w4:hover {
-            box-shadow: 0 18px 30px rgba(255, 183, 3, 0.38), 0 10px 0px #ffd666;
+            box-shadow: 0 18px 30px rgba(217, 184, 143, 0.32), 0 10px 0px #cbb598;
         }
         
         .level-card.w5:hover {
-            box-shadow: 0 18px 30px rgba(82, 196, 26, 0.35), 0 10px 0px #95de64;
+            box-shadow: 0 18px 30px rgba(163, 177, 138, 0.3), 0 10px 0px #a7b897;
         }
         
         .level-card.unlocked:hover::before {
@@ -345,7 +343,7 @@
         /* 點擊壓下質感 */
         .level-card.unlocked:active {
             transform: translateY(-2px);
-            box-shadow: 0 5px 10px rgba(0,0,0,0.1), 0 2px 0px #ccc;
+            box-shadow: 0 5px 10px rgba(74, 74, 72, 0.1), 0 2px 0px #c4bfb6;
         }
 
         /* === 未解鎖關卡 (Locked Styles) === */
@@ -354,23 +352,23 @@
             border: 3px dashed var(--card-locked-border);
             color: var(--card-locked-text);
             cursor: not-allowed;
-            box-shadow: 0 4px 0px #cbd5e1;
+            box-shadow: 0 4px 0px #d4cfc5;
         }
 
         .level-card.locked .level-number {
-            background: #dee2e6;
-            color: #6c757d;
+            background: #dbd7cf;
+            color: #87837a;
         }
 
         .level-card.locked .card-title {
-            color: #8d99ae;
+            color: #969288;
         }
 
-        /* 未解鎖關卡 Hover 搖晃效果 (Shake/Wiggle) */
+        /* 未解鎖關卡 Hover 搖晃效果 */
         .level-card.locked:hover {
             animation: wiggle 0.4s ease-in-out infinite alternate;
-            border-color: #adb5bd;
-            background-color: #e2e6ea;
+            border-color: #b5b0a5;
+            background-color: #dfdcd4;
         }
 
         @keyframes wiggle {
@@ -387,8 +385,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) scale(0);
-            background: rgba(50, 50, 50, 0.85);
-            color: #fff;
+            background: rgba(89, 86, 80, 0.88);
+            color: #fcfaf7;
             padding: 0.3rem 0.8rem;
             border-radius: 10px;
             font-size: 0.8rem;
@@ -441,8 +439,8 @@
         <!-- 頂部個人檔案 -->
         <header class="profile-header">
             <div class="avatar-wrapper">
-                <!-- 可愛大頭貼預設圖片 (DiceBear Cute Bot/Monster Style) -->
-                <img class="avatar-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=CuteStudent&backgroundColor=b6e3f4" alt="我的大頭貼" onerror="this.src='https://placehold.co/120x120/ffccd5/590d22?text=Avatar'">
+                <!-- 大頭貼背景也同步調整為莫蘭迪霧藍 (#c5d5dc) -->
+                <img class="avatar-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=CuteStudent&backgroundColor=c5d5dc" alt="我的大頭貼" onerror="this.src='https://placehold.co/120x120/dec3c3/664444?text=Avatar'">
                 <div class="level-badge">LV. 5</div>
             </div>
             <h1 class="user-name">我的程式闖關作品集</h1>
@@ -591,3 +589,9 @@
                 </div>
                 <div class="card-title">Week 16 - 未解鎖</div>
             </div>
+
+        </main>
+    </div>
+
+</body>
+</html>
