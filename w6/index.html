@@ -83,7 +83,7 @@
       </h1>
     </header>
 
-    <!-- CodePen 測試專用快速切換條 (方便不改網址也能測建立與投票) -->
+    <!-- CodePen 測試專用快速切換條 -->
     <div class="flex items-center justify-center gap-2 mb-6 p-1 rounded-xl bg-[#EFECE6] text-xs">
       <button id="tabCreateBtn" onclick="switchMode('create')"
         class="flex-1 py-1.5 rounded-lg font-medium transition-all bg-white shadow-sm text-[#4A4A48]">
@@ -332,7 +332,7 @@
 
   <script>
     // ==================== 設定區 ====================
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyzJY-jjSMs4HVe7xDXYQbBPuamYA4d9iEPAANm4jRpplGKS1acUqFXDHCdjAWW8BGT/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx40oubGlMakATcdfdB53a54PYrTTlL2CHIH05tBoODKBcggjC46qV759bvNYeQT2fP/exec";
 
     // 狀態管理
     let compressedBase64A = "";
@@ -519,7 +519,6 @@
 
     function goToCreatedPoll() {
       if (currentPollId) {
-        // 嘗試更新網址列 (在 CodePen iframe 中若被阻擋則忽略)
         try {
           window.history.pushState({}, "", `?poll=${currentPollId}`);
         } catch (e) {}
@@ -584,7 +583,6 @@
       if (ended) {
         showRevealedState(data);
       } else {
-        // 隱藏開票結果面板，開啟投票狀態
         document.getElementById("resultPanel").classList.add("hidden");
         document.getElementById("winnerTagA").classList.add("hidden");
         document.getElementById("winnerTagB").classList.add("hidden");
@@ -608,7 +606,6 @@
           btnB.style.opacity = "1";
         }
 
-        // 啟動即時倒數計時器
         startCountdown(data.deadline);
       }
     }
@@ -623,7 +620,6 @@
         const diff = new Date(deadlineStr) - new Date();
         if (diff <= 0) {
           clearInterval(countdownTimer);
-          // 時間一到，自動重新向後端抓最新票數並開票
           loadPoll(currentPollId);
           return;
         }
@@ -648,7 +644,6 @@
       badge.style.backgroundColor = "#E6D8D8";
       badge.style.color = "#7A5252";
 
-      // 鎖定投票按鈕
       const btnA = document.getElementById("voteBtnA");
       const btnB = document.getElementById("voteBtnB");
       btnA.disabled = true;
@@ -658,7 +653,6 @@
       btnA.style.opacity = "0.5";
       btnB.style.opacity = "0.5";
 
-      // 計算票數比例
       const vA = Number(data.votesA || 0);
       const vB = Number(data.votesB || 0);
       const total = vA + vB;
@@ -671,13 +665,11 @@
 
       document.getElementById("resultPanel").classList.remove("hidden");
 
-      // 延遲觸發進度條動畫
       setTimeout(() => {
         document.getElementById("barA").style.width = `${pctA}%`;
         document.getElementById("barB").style.width = `${pctB}%`;
       }, 100);
 
-      // 標示勝出皇冠
       document.getElementById("winnerTagA").classList.toggle("hidden", !(vA > vB));
       document.getElementById("winnerTagB").classList.toggle("hidden", !(vB > vA));
     }
