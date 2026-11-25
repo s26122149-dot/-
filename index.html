@@ -18,6 +18,7 @@
             --primary-blue: #9bb1bd;        /* 霧霾灰藍 */
             --primary-green: #a3b18a;       /* 鼠尾草綠 */
             --primary-terracotta: #c69376;  /* 焦糖陶土 */
+            --primary-berry: #b88b96;       /* 煙燻莓果 */
             --text-dark: #4a4a48;           /* 炭灰深褐 */
             --text-muted: #7f7f7a;          /* 暖灰次要文字 */
             --card-locked-bg: #e6e3dc;      /* 鎖定卡片底色 */
@@ -303,6 +304,18 @@
             color: #9c6244;
         }
         .level-card.w6 .card-title { color: #5e3824; }
+
+        /* 關卡7主題色彩：煙燻莓果 */
+        .level-card.w7 {
+            background: linear-gradient(135deg, #fcfaf7 55%, #f0e4e7);
+            border-color: #d4b8bf;
+            box-shadow: 0 10px 20px rgba(184, 139, 150, 0.18), 0 6px 0px #bfa0a8;
+        }
+        .level-card.w7 .level-number {
+            background: #e8d5da;
+            color: #8c5865;
+        }
+        .level-card.w7 .card-title { color: #54323b; }
         
         /* 滑光微效 (Shimmer Animation) */
         .level-card.unlocked::before {
@@ -350,6 +363,10 @@
 
         .level-card.w6:hover {
             box-shadow: 0 18px 30px rgba(198, 147, 118, 0.32), 0 10px 0px #c9a28b;
+        }
+
+        .level-card.w7:hover {
+            box-shadow: 0 18px 30px rgba(184, 139, 150, 0.32), 0 10px 0px #bfa0a8;
         }
         
         .level-card.unlocked:hover::before {
@@ -465,9 +482,9 @@
 
             <!-- 闖關進度條 -->
             <div class="progress-box">
-                <div class="progress-bar" style="width: 37.5%;"></div>
+                <div class="progress-bar" style="width: 43.75%;"></div>
             </div>
-            <div class="progress-text">關卡解鎖進度：6 / 16 (37.5%)</div>
+            <div class="progress-text">關卡解鎖進度：7 / 16 (43.75%)</div>
         </header>
 
         <!-- 16 個任務關卡網格 -->
@@ -526,16 +543,17 @@
                 </div>
                 <div class="card-title">Week 6 - 拍照二選一</div>
             </a>
-            
-            <!-- 按鈕 7 ~ 16：未解鎖狀態 -->
-            <div class="level-card locked">
+
+            <!-- 按鈕 7：Week 07 (已解鎖) -->
+            <a href="w7/index.html" class="level-card unlocked w7">
                 <div class="card-header">
                     <span class="level-number">WEEK 07</span>
-                    <span class="card-icon">🔒</span>
+                    <span class="card-icon">🚦</span>
                 </div>
-                <div class="card-title">Week 7 - 未解鎖</div>
-            </div>
-
+                <div class="card-title">Week 7 - 直線七秒模擬器</div>
+            </a>
+            
+            <!-- 按鈕 8 ~ 16：未解鎖狀態 -->
             <div class="level-card locked">
                 <div class="card-header">
                     <span class="level-number">WEEK 08</span>
