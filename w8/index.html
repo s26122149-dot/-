@@ -1,0 +1,2002 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>台灣機車直線七秒模擬器｜監理站路考第一視角</title>
+  <!-- 依照規範保留外部樣式表連結，同時內聯完整 CSS 確保單檔可直接運行 -->
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ==========================================================================
+       全域與基礎重置樣式 (禁止選取文字、防止手機長按彈出選單與橡皮筋捲動)
+       ========================================================================== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #3E4246;
+      font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
+      color: #F2EFE9;
+    }
+
+    /* 遊戲主容器 */
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh; /* 適配行動裝置動態視窗高度 */
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    /* 第一視角主畫布 */
+    #game-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      display: block;
+    }
+
+    /* ==========================================================================
+       頂部 HUD 儀表板區域 (莫蘭迪極簡質感：燕麥米白 + 暖灰褐 + 霧霾綠)
+       ========================================================================== */
+    #top-hud {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      padding: 10px 14px;
+      background: linear-gradient(180deg, rgba(62, 66, 70, 0.72) 0%, rgba(62, 66, 70, 0.25) 75%, rgba(62, 66, 70, 0) 100%);
+      pointer-events: none;
+    }
+
+    .hud-stats-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 720px;
+      margin: 0 auto 8px auto;
+      gap: 8px;
+    }
+
+    .stat-card {
+      flex: 1;
+      background: rgba(242, 239, 233, 0.90);
+      border: 1.5px solid rgba(168, 159, 145, 0.55);
+      border-radius: 14px;
+      padding: 6px 10px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(62, 66, 70, 0.16);
+      backdrop-filter: blur(6px);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #6E6A63;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      margin-top: 2px;
+      color: #3E4246;
+    }
+
+    /* 計時器達標霧霾綠狀態 */
+    .timer-pass {
+      color: #6B8E78 !important;
+      text-shadow: 0 0 8px rgba(143, 163, 149, 0.45) !important;
+    }
+
+    .timer-wait {
+      color: #B69564;
+    }
+
+    /* 右上角音效開關按鈕 (允許點擊) */
+    #sound-btn {
+      pointer-events: auto;
+      background: rgba(242, 239, 233, 0.90);
+      border: 1.5px solid rgba(168, 159, 145, 0.55);
+      color: #3E4246;
+      border-radius: 14px;
+      width: 44px;
+      height: 50px;
+      font-size: 19px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(62, 66, 70, 0.16);
+      transition: transform 0.1s ease, background 0.2s;
+    }
+
+    #sound-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* 醒目的頂部平衡儀表條 (莫蘭迪低飽和豆沙粉 -> 奶油杏黃 -> 霧霾綠) */
+    .balance-wrapper {
+      max-width: 540px;
+      margin: 0 auto;
+      background: rgba(242, 239, 233, 0.92);
+      border: 1.5px solid rgba(168, 159, 145, 0.6);
+      border-radius: 14px;
+      padding: 6px 12px 8px 12px;
+      box-shadow: 0 6px 16px rgba(62, 66, 70, 0.18);
+    }
+
+    .balance-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 5px;
+      color: #6E6A63;
+    }
+
+    .balance-track {
+      position: relative;
+      width: 100%;
+      height: 16px;
+      border-radius: 8px;
+      overflow: hidden;
+      /* 豆沙粉紅 -> 奶油杏黃 -> 霧霾綠(安全區) -> 奶油杏黃 -> 豆沙粉紅 */
+      background: linear-gradient(
+        90deg,
+        #C88A84 0%,
+        #C88A84 16%,
+        #D8C39E 22%,
+        #D8C39E 33%,
+        #8FA395 38%,
+        #8FA395 62%,
+        #D8C39E 67%,
+        #D8C39E 78%,
+        #C88A84 84%,
+        #C88A84 100%
+      );
+      box-shadow: inset 0 1px 4px rgba(62, 66, 70, 0.28);
+    }
+
+    /* 中央準心刻度 */
+    .balance-center-mark {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      transform: translateX(-50%);
+      width: 2.5px;
+      height: 100%;
+      background: rgba(242, 239, 233, 0.95);
+      z-index: 2;
+    }
+
+    /* 動態車身平衡指針 */
+    #balance-needle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 13px;
+      height: 22px;
+      background: #F2EFE9;
+      border: 2.5px solid #3E4246;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(62, 66, 70, 0.45);
+      z-index: 3;
+      transition: left 0.04s linear;
+    }
+
+    /* ==========================================================================
+       中央浮動提示標語 (莫蘭迪溫潤深灰底 + 奶油杏黃字)
+       ========================================================================== */
+    #status-banner {
+      position: relative;
+      z-index: 9;
+      align-self: center;
+      background: rgba(62, 66, 70, 0.84);
+      border: 1.5px solid rgba(216, 195, 158, 0.65);
+      color: #F2EFE9;
+      padding: 6px 18px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      pointer-events: none;
+      backdrop-filter: blur(4px);
+      transition: opacity 0.25s ease;
+    }
+
+    /* ==========================================================================
+       底部操控按鍵區 (由左至右：油門、左微調、右微調，支援多點觸控)
+       ========================================================================== */
+    #controls-area {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 12px 16px 20px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      pointer-events: none; /* 讓空白區域不擋住畫面，僅按鈕可點擊 */
+    }
+
+    .throttle-group {
+      pointer-events: auto;
+    }
+
+    .steer-group {
+      display: flex;
+      gap: 14px;
+      pointer-events: auto;
+    }
+
+    .ctrl-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 22px;
+      color: #F2EFE9;
+      font-weight: 900;
+      cursor: pointer;
+      touch-action: none; /* 關鍵：確保多點觸控不延遲、不觸發手勢 */
+      transition: transform 0.06s ease, filter 0.06s ease, box-shadow 0.06s ease;
+    }
+
+    /* 最左側油門大按鈕 (莫蘭迪豆沙赤陶紅) */
+    .btn-throttle {
+      width: 106px;
+      height: 94px;
+      background: linear-gradient(180deg, #C88A84 0%, #B0726C 100%);
+      border: 2.5px solid #E5BEB9;
+      box-shadow: 0 7px 0 #7E4E49, 0 12px 20px rgba(62, 66, 70, 0.35);
+    }
+
+    .btn-throttle .icon {
+      font-size: 30px;
+      line-height: 1;
+    }
+
+    .btn-throttle .label {
+      font-size: 15px;
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+
+    /* 右側左右微調大按鈕 (莫蘭迪靜謐灰藍) */
+    .btn-steer {
+      width: 84px;
+      height: 84px;
+      background: linear-gradient(180deg, #8E9BAE 0%, #738296 100%);
+      border: 2.5px solid #C5CED9;
+      box-shadow: 0 6px 0 #4F5B6B, 0 10px 18px rgba(62, 66, 70, 0.32);
+    }
+
+    .btn-steer .icon {
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    .btn-steer .label {
+      font-size: 13.5px;
+      margin-top: 4px;
+    }
+
+    /* 按下狀態視覺回饋 (支援觸控與鍵盤同步高亮) */
+    .ctrl-btn.active,
+    .ctrl-btn:active {
+      transform: translateY(5px) scale(0.96);
+      filter: brightness(1.08);
+    }
+
+    .btn-throttle.active {
+      box-shadow: 0 2px 0 #7E4E49, 0 4px 10px rgba(62, 66, 70, 0.35);
+      background: linear-gradient(180deg, #D49B95 0%, #B87B75 100%);
+    }
+
+    .btn-steer.active {
+      box-shadow: 0 2px 0 #4F5B6B, 0 4px 10px rgba(62, 66, 70, 0.32);
+      background: linear-gradient(180deg, #A3B0C2 0%, #7F8FA3 100%);
+    }
+
+    /* ==========================================================================
+       彈窗遮罩 (莫蘭迪燕麥米白卡片 + 暖灰褐文字)
+       ========================================================================== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(62, 66, 70, 0.68);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .modal-overlay.hidden {
+      display: none;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 440px;
+      background: linear-gradient(180deg, #F2EFE9 0%, #EAE6DF 100%);
+      border: 2px solid #C5BEB2;
+      border-radius: 24px;
+      padding: 24px 22px;
+      text-align: center;
+      color: #3E4246;
+      box-shadow: 0 20px 45px rgba(62, 66, 70, 0.45);
+      animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.88); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-badge {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      letter-spacing: 0.8px;
+    }
+
+    .badge-exam {
+      background: #7B8D93;
+      color: #F2EFE9;
+    }
+
+    .badge-pass {
+      background: #8FA395;
+      color: #F2EFE9;
+    }
+
+    .badge-fail {
+      background: #C88A84;
+      color: #F2EFE9;
+    }
+
+    .modal-title {
+      font-size: 25px;
+      font-weight: 900;
+      margin-bottom: 12px;
+      line-height: 1.3;
+      color: #3E4246;
+    }
+
+    .modal-rules {
+      text-align: left;
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid #D3CCC0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: #54524D;
+    }
+
+    .modal-rules li {
+      margin-left: 18px;
+      margin-bottom: 4px;
+    }
+
+    .result-metrics {
+      display: flex;
+      justify-content: space-around;
+      background: rgba(255, 255, 255, 0.65);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 14px;
+      border: 1px solid #D3CCC0;
+    }
+
+    .metric-box span {
+      display: block;
+      font-size: 12px;
+      color: #6E6A63;
+      font-weight: 600;
+    }
+
+    .metric-box strong {
+      font-size: 22px;
+      color: #3E4246;
+    }
+
+    .examiner-comment {
+      background: rgba(216, 195, 158, 0.35);
+      border-left: 4px solid #B69564;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #4E4A44;
+      margin-bottom: 20px;
+      text-align: left;
+      line-height: 1.5;
+    }
+
+    .primary-btn {
+      width: 100%;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #8FA395 0%, #758A7B 100%);
+      color: #F2EFE9;
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #536458, 0 10px 20px rgba(62, 66, 70, 0.25);
+      transition: transform 0.08s ease;
+    }
+
+    .primary-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #536458;
+    }
+
+    /* 電腦版鍵盤提示小字 */
+    .pc-hint {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #6E6A63;
+    }
+
+    /* 遊戲主容器 */
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh; /* 適配行動裝置動態視窗高度 */
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    /* 第一視角主畫布 */
+    #game-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      display: block;
+    }
+
+    /* ==========================================================================
+       頂部 HUD 儀表板區域 (計時器、距離、時速、平衡儀表條)
+       ========================================================================== */
+    #top-hud {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      padding: 10px 14px;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.88) 0%, rgba(15, 23, 42, 0.45) 80%, rgba(15, 23, 42, 0) 100%);
+      pointer-events: none;
+    }
+
+    .hud-stats-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 720px;
+      margin: 0 auto 8px auto;
+      gap: 8px;
+    }
+
+    .stat-card {
+      flex: 1;
+      background: rgba(30, 41, 59, 0.85);
+      border: 1.5px solid rgba(148, 163, 184, 0.35);
+      border-radius: 12px;
+      padding: 6px 10px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(4px);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #cbd5e1;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      margin-top: 2px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+    }
+
+    /* 計時器達標綠燈狀態 */
+    .timer-pass {
+      color: #4ade80 !important;
+      text-shadow: 0 0 12px rgba(74, 222, 128, 0.8) !important;
+    }
+
+    .timer-wait {
+      color: #fbbf24;
+    }
+
+    /* 右上角音效開關按鈕 (允許點擊) */
+    #sound-btn {
+      pointer-events: auto;
+      background: rgba(30, 41, 59, 0.9);
+      border: 1.5px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+      border-radius: 12px;
+      width: 44px;
+      height: 48px;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+      transition: transform 0.1s ease, background 0.2s;
+    }
+
+    #sound-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* 醒目的頂部平衡儀表條 */
+    .balance-wrapper {
+      max-width: 540px;
+      margin: 0 auto;
+      background: rgba(15, 23, 42, 0.88);
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-radius: 14px;
+      padding: 6px 12px 8px 12px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+    }
+
+    .balance-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 5px;
+      color: #e2e8f0;
+    }
+
+    .balance-track {
+      position: relative;
+      width: 100%;
+      height: 18px;
+      border-radius: 9px;
+      overflow: hidden;
+      /* 紅 -> 黃 -> 綠(安全區) -> 黃 -> 紅 漸層 */
+      background: linear-gradient(
+        90deg,
+        #ef4444 0%,
+        #ef4444 16%,
+        #f59e0b 22%,
+        #f59e0b 33%,
+        #22c55e 38%,
+        #22c55e 62%,
+        #f59e0b 67%,
+        #f59e0b 78%,
+        #ef4444 84%,
+        #ef4444 100%
+      );
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.6);
+    }
+
+    /* 中央準心刻度 */
+    .balance-center-mark {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      transform: translateX(-50%);
+      width: 3px;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.85);
+      z-index: 2;
+    }
+
+    /* 動態車身平衡指針 */
+    #balance-needle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 14px;
+      height: 24px;
+      background: #ffffff;
+      border: 3px solid #0f172a;
+      border-radius: 6px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.95);
+      z-index: 3;
+      transition: left 0.04s linear;
+    }
+
+    /* ==========================================================================
+       中央浮動提示標語 (起跑提示 / 管線警報閃爍)
+       ========================================================================== */
+    #status-banner {
+      position: relative;
+      z-index: 9;
+      align-self: center;
+      background: rgba(15, 23, 42, 0.78);
+      border: 1.5px solid rgba(250, 204, 21, 0.6);
+      color: #fef08a;
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      pointer-events: none;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+      transition: opacity 0.25s ease;
+    }
+
+    /* ==========================================================================
+       底部操控按鍵區 (支援多點觸控：左手方向微調、右手催油門)
+       ========================================================================== */
+    #controls-area {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 12px 16px 20px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      pointer-events: none; /* 讓空白區域不擋住畫面，僅按鈕可點擊 */
+    }
+
+    .steer-group {
+      display: flex;
+      gap: 14px;
+      pointer-events: auto;
+    }
+
+    .throttle-group {
+      pointer-events: auto;
+    }
+
+    .ctrl-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 22px;
+      color: #ffffff;
+      font-weight: 900;
+      cursor: pointer;
+      touch-action: none; /* 關鍵：確保多點觸控不延遲、不觸發手勢 */
+      transition: transform 0.06s ease, filter 0.06s ease, box-shadow 0.06s ease;
+    }
+
+    /* 左右微調大按鈕 */
+    .btn-steer {
+      width: 84px;
+      height: 84px;
+      background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+      border: 3px solid #93c5fd;
+      box-shadow: 0 7px 0 #1e3a8a, 0 12px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-steer .icon {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .btn-steer .label {
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    /* 右側油門大按鈕 */
+    .btn-throttle {
+      width: 106px;
+      height: 94px;
+      background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
+      border: 3px solid #fca5a5;
+      box-shadow: 0 8px 0 #7f1d1d, 0 14px 22px rgba(0, 0, 0, 0.55);
+    }
+
+    .btn-throttle .icon {
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    .btn-throttle .label {
+      font-size: 16px;
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+
+    /* 按下狀態視覺回饋 (支援觸控與鍵盤同步高亮) */
+    .ctrl-btn.active,
+    .ctrl-btn:active {
+      transform: translateY(5px) scale(0.96);
+      filter: brightness(1.18);
+    }
+
+    .btn-steer.active {
+      box-shadow: 0 2px 0 #1e3a8a, 0 4px 10px rgba(0, 0, 0, 0.5);
+      background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+    }
+
+    .btn-throttle.active {
+      box-shadow: 0 2px 0 #7f1d1d, 0 4px 10px rgba(0, 0, 0, 0.5);
+      background: linear-gradient(180deg, #f87171 0%, #dc2626 100%);
+    }
+
+    /* ==========================================================================
+       彈窗遮罩 (開場說明 / 考官判決結果視窗)
+       ========================================================================== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .modal-overlay.hidden {
+      display: none;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 440px;
+      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      border: 2px solid #475569;
+      border-radius: 24px;
+      padding: 24px 22px;
+      text-align: center;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
+      animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.85); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-badge {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+
+    .badge-exam {
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    .badge-pass {
+      background: #16a34a;
+      color: #ffffff;
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.6);
+    }
+
+    .badge-fail {
+      background: #dc2626;
+      color: #ffffff;
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+    }
+
+    .modal-title {
+      font-size: 26px;
+      font-weight: 900;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+
+    .modal-rules {
+      text-align: left;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      font-size: 14px;
+      line-height: 1.65;
+      color: #e2e8f0;
+    }
+
+    .modal-rules li {
+      margin-left: 18px;
+      margin-bottom: 4px;
+    }
+
+    .result-metrics {
+      display: flex;
+      justify-content: space-around;
+      background: rgba(30, 41, 59, 0.9);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .metric-box span {
+      display: block;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .metric-box strong {
+      font-size: 22px;
+      color: #f8fafc;
+    }
+
+    .examiner-comment {
+      background: rgba(254, 240, 138, 0.12);
+      border-left: 4px solid #facc15;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fef08a;
+      margin-bottom: 20px;
+      text-align: left;
+      line-height: 1.5;
+    }
+
+    .primary-btn {
+      width: 100%;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #14532d, 0 10px 20px rgba(0, 0, 0, 0.4);
+      transition: transform 0.08s ease;
+    }
+
+    .primary-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #14532d;
+    }
+
+    /* 電腦版鍵盤提示小字 */
+    .pc-hint {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    /* 小螢幕手機微調 */
+    @media (max-width: 420px) {
+      .btn-steer {
+        width: 74px;
+        height: 76px;
+      }
+      .btn-throttle {
+        width: 94px;
+        height: 84px;
+      }
+      .stat-value {
+        font-size: 19px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <!-- 第一視角考場 3D 透視畫布 -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- 頂部 HUD 儀表區 -->
+    <header id="top-hud">
+      <div class="hud-stats-row">
+        <div class="stat-card">
+          <div class="stat-label">通過時間 (目標 ≥7.00s)</div>
+          <div id="hud-time" class="stat-value timer-wait">0.00 s</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">終點距離</div>
+          <div id="hud-dist" class="stat-value">15.0 m</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">目前時速</div>
+          <div id="hud-speed" class="stat-value">0 km/h</div>
+        </div>
+        <button id="sound-btn" type="button" title="切換音效" aria-label="切換音效">🔊</button>
+      </div>
+
+      <!-- 車身平衡儀表條 -->
+      <div class="balance-wrapper">
+        <div class="balance-header">
+          <span>◀ 偏左危險</span>
+          <span>⚖️ 車身平衡儀 (保持在綠色區)</span>
+          <span>偏右危險 ▶</span>
+        </div>
+        <div class="balance-track">
+          <div class="balance-center-mark"></div>
+          <div id="balance-needle"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 中央動態提示標語 -->
+    <div id="status-banner">🏁 準備好了嗎？按住左側「催油門」起步！</div>
+
+    <!-- 底部多點觸控操控按鈕 (由左至右：油門、左微調、右微調) -->
+    <footer id="controls-area">
+      <div class="throttle-group">
+        <button id="btn-throttle" class="ctrl-btn btn-throttle" type="button" aria-label="催油門">
+          <span class="icon">🏍️</span>
+          <span class="label">催油門</span>
+        </button>
+      </div>
+
+      <div class="steer-group">
+        <button id="btn-left" class="ctrl-btn btn-steer" type="button" aria-label="左轉微調">
+          <span class="icon">◀</span>
+          <span class="label">左微調</span>
+        </button>
+        <button id="btn-right" class="ctrl-btn btn-steer" type="button" aria-label="右轉微調">
+          <span class="icon">▶</span>
+          <span class="label">右微調</span>
+        </button>
+      </div>
+    </footer>
+
+    <!-- 開場考前說明視窗 -->
+    <div id="start-modal" class="modal-overlay">
+      <div class="modal-card">
+        <span class="modal-badge badge-exam">🇹🇼 交通部公路局｜普通重型機車路考</span>
+        <h1 class="modal-title">直線七秒模擬器</h1>
+        <ul class="modal-rules">
+          <li><strong>考試距離：</strong>全長 <strong>15.0 公尺</strong>，車道寬度僅 40 公分。</li>
+          <li><strong>及格標準：</strong>行駛時間必須 <strong>滿 7.00 秒以上</strong> 通過終點線。</li>
+          <li><strong>三大扣分地雷：</strong>
+            <br>1. 未滿 7 秒衝過終點（扣 32 分直接掰掰）
+            <br>2. 車輪壓到兩側白線管線（警鈴逼逼叫）
+            <br>3. 速度歸零停住或傾斜倒車（雙腳落地）
+          </li>
+          <li><strong>駕駛秘訣：</strong>車速越慢龍頭越晃！左手輕點「催油門」維持微弱動力，右手配合微調「左 / 右」拉正車身！</li>
+        </ul>
+        <button id="start-btn" class="primary-btn" type="button">戴好安全帽，開始考試！</button>
+        <div class="pc-hint">💻 電腦支援鍵盤：↑/W 催油門，←/A 左轉，→/D 右轉</div>
+      </div>
+    </div>
+
+    <!-- 考試結束考官判決視窗 -->
+    <div id="result-modal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <span id="result-badge" class="modal-badge badge-fail">考官吹哨！不合格</span>
+        <h2 id="result-title" class="modal-title">壓線出界啦！</h2>
+        <div class="result-metrics">
+          <div class="metric-box">
+            <span>最終秒數</span>
+            <strong id="res-time">4.28 s</strong>
+          </div>
+          <div class="metric-box">
+            <span>行駛距離</span>
+            <strong id="res-dist">9.4 m</strong>
+          </div>
+        </div>
+        <div id="res-comment" class="examiner-comment">
+          📢 監理站考官：「管線在叫你沒聽到嗎？下禮拜預約再來一次！」
+        </div>
+        <button id="retry-btn" class="primary-btn" type="button">🔄 不服氣，再考一次 (Space)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 依照規範保留 script.js 標籤，同時內聯完整 JS 並嚴格包裝在 DOMContentLoaded 內 -->
+  <script src="script.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // =========================================================================
+      // 1. 取得 DOM 元素參考 (確保在 DOMContentLoaded 後安全取得)
+      // =========================================================================
+      const canvas = document.getElementById('game-canvas');
+      const ctx = canvas.getContext('2d');
+
+      const hudTime = document.getElementById('hud-time');
+      const hudDist = document.getElementById('hud-dist');
+      const hudSpeed = document.getElementById('hud-speed');
+      const balanceNeedle = document.getElementById('balance-needle');
+      const statusBanner = document.getElementById('status-banner');
+      const soundBtn = document.getElementById('sound-btn');
+
+      const btnLeft = document.getElementById('btn-left');
+      const btnRight = document.getElementById('btn-right');
+      const btnThrottle = document.getElementById('btn-throttle');
+
+      const startModal = document.getElementById('start-modal');
+      const startBtn = document.getElementById('start-btn');
+      const resultModal = document.getElementById('result-modal');
+      const resultBadge = document.getElementById('result-badge');
+      const resultTitle = document.getElementById('result-title');
+      const resTime = document.getElementById('res-time');
+      const resDist = document.getElementById('res-dist');
+      const resComment = document.getElementById('res-comment');
+      const retryBtn = document.getElementById('retry-btn');
+
+      // =========================================================================
+      // 2. Web Audio API 音效合成器 (引擎聲、考官吹哨、壓線警鈴、過關音效)
+      // =========================================================================
+      const SoundEngine = {
+        ctx: null,
+        muted: false,
+        engineOsc: null,
+        engineGain: null,
+        isEngineRunning: false,
+
+        init() {
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) {
+              this.ctx = new AudioCtx();
+            }
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+          }
+        },
+
+        toggleMute() {
+          this.muted = !this.muted;
+          soundBtn.textContent = this.muted ? '🔇' : '🔊';
+          if (this.muted && this.engineGain && this.ctx) {
+            this.engineGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.05);
+          }
+        },
+
+        startEngine() {
+          this.init();
+          if (!this.ctx || this.isEngineRunning) return;
+          try {
+            this.engineOsc = this.ctx.createOscillator();
+            const filter = this.ctx.createBiquadFilter();
+            this.engineGain = this.ctx.createGain();
+
+            // 模擬單缸速克達引擎低沉脈衝聲
+            this.engineOsc.type = 'sawtooth';
+            this.engineOsc.frequency.value = 42;
+
+            filter.type = 'lowpass';
+            filter.frequency.value = 180;
+
+            this.engineGain.gain.value = 0.001;
+
+            this.engineOsc.connect(filter);
+            filter.connect(this.engineGain);
+            this.engineGain.connect(this.ctx.destination);
+
+            this.engineOsc.start();
+            this.isEngineRunning = true;
+          } catch (e) {
+            console.warn('Audio init skipped:', e);
+          }
+        },
+
+        updateEngine(speedMs, isThrottling, isPlaying) {
+          if (!this.ctx || !this.isEngineRunning || !this.engineOsc || !this.engineGain) return;
+          const now = this.ctx.currentTime;
+          if (this.muted || !isPlaying) {
+            this.engineGain.gain.setTargetAtTime(0, now, 0.08);
+            return;
+          }
+          // 基礎怠速 42Hz，隨車速與催油門拉高轉速
+          const targetFreq = 42 + speedMs * 24 + (isThrottling ? 16 : 0);
+          const targetGain = isThrottling ? 0.11 : 0.055;
+          this.engineOsc.frequency.setTargetAtTime(targetFreq, now, 0.08);
+          this.engineGain.gain.setTargetAtTime(targetGain, now, 0.08);
+        },
+
+        // 考官逼逼哨音 (高頻雙音調顫音)
+        playWhistle() {
+          this.init();
+          if (!this.ctx || this.muted) return;
+          const now = this.ctx.currentTime;
+
+          const osc = this.ctx.createOscillator();
+          const lfo = this.ctx.createOscillator();
+          const lfoGain = this.ctx.createGain();
+          const mainGain = this.ctx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(2850, now);
+          osc.frequency.linearRampToValueAtTime(3100, now + 0.15);
+          osc.frequency.setValueAtTime(2950, now + 0.45);
+
+          // 哨子滾珠顫音效果
+          lfo.type = 'sine';
+          lfo.frequency.value = 38;
+          lfoGain.gain.value = 110;
+          lfo.connect(lfoGain);
+          lfoGain.connect(osc.frequency);
+
+          mainGain.gain.setValueAtTime(0.001, now);
+          mainGain.gain.linearRampToValueAtTime(0.22, now + 0.03);
+          mainGain.gain.setValueAtTime(0.22, now + 0.55);
+          mainGain.gain.exponentialRampToValueAtTime(0.001, now + 0.75);
+
+          osc.connect(mainGain);
+          mainGain.connect(this.ctx.destination);
+
+          osc.start(now);
+          lfo.start(now);
+          osc.stop(now + 0.76);
+          lfo.stop(now + 0.76);
+        },
+
+        // 過關歡呼和弦音效
+        playSuccess() {
+          this.init();
+          if (!this.ctx || this.muted) return;
+          const now = this.ctx.currentTime;
+          const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+
+            gain.gain.setValueAtTime(0.001, now + idx * 0.09);
+            gain.gain.linearRampToValueAtTime(0.18, now + idx * 0.09 + 0.03);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.55);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + idx * 0.09);
+            osc.stop(now + idx * 0.09 + 0.56);
+          });
+        }
+      };
+
+      // =========================================================================
+      // 3. 爆笑考官評語資料庫
+      // =========================================================================
+      const COMMENTS = {
+        tooFast: [
+          '「騎這麼快趕著投胎逆？扣 32 分，直接去旁邊領身分證！」',
+          '「這是直線七秒，不是直線加速賽！你以為你在騎重機嗎？」',
+          '「連 7 秒都撐不到，你以後載女朋友停紅燈怎麼辦？重考！」',
+          '「考官哨子都還沒拿起來你就衝過去了，扣 32 分掰掰！」'
+        ],
+        outOfBounds: [
+          '「壓線啦！地面管線逼逼叫你沒聽到嗎？明年再來吧！」',
+          '「車道有 40 公分寬你還能騎出去，這也是一種天份！扣 32 分！」',
+          '「輪胎壓到黑管線了！監理站警報器都為你響起，下車牽車！」',
+          '「眼睛看遠方不要一直盯著前輪！看吧，直接偏出白線外了！」'
+        ],
+        fellDown: [
+          '「雙腳落地！這不是在路口等紅燈啊同學，扣 32 分！」',
+          '「車速慢到定竿倒車，考官看了都替你捏把冷汗，下次記得補點油門！」',
+          '「龍頭晃得跟波浪鼓一樣，直接表演原地側翻，不合格！」',
+          '「定竿失敗！機車沒有裝輔助輪，快倒的時候要輕催油門拉正啊！」'
+        ],
+        pass: [
+          '「漂亮！穩如老狗，這平衡感可以直接去跑外送了！」',
+          '「恭喜過關！考官點頭表示欣慰，準備前往下一關鐵路平交道！」',
+          '「太神啦！龍頭微調得恰到好處，駕照已經在向你招手了！」',
+          '「完美控速！不疾不徐穩穩壓過終點線，標準的台灣優良駕駛！」'
+        ]
+      };
+
+      function getRandomComment(list) {
+        return list[Math.floor(Math.random() * list.length)];
+      }
+
+      // =========================================================================
+      // 4. 遊戲物理狀態與常數設定
+      // =========================================================================
+      const TOTAL_DISTANCE = 15.0;   // 直線七秒總長度 15.0 公尺
+      const TARGET_TIME = 7.00;      // 及格最低秒數 7.00 秒
+      const LANE_HALF_WIDTH = 0.20;  // 車道半寬 0.20m (總寬 40cm)
+      const MAX_TILT = 1.0;          // 最大車身傾斜極限 (超過即倒車)
+
+      const gameState = {
+        phase: 'START',        // 'START' | 'PLAYING' | 'RESULT'
+        hasStartedMoving: false, // 是否已催油門起步
+        elapsedTime: 0,        // 已行駛時間 (秒)
+        distance: 0,           // 已行駛距離 (公尺)
+        speed: 0,              // 目前車速 (公尺/秒)
+        lateralPos: 0,         // 車身中心橫向位置 (-0.20m ~ +0.20m, 0為正中央)
+        tilt: 0,               // 車身傾斜度 (-1.0 ~ +1.0)
+        tiltVelocity: 0,       // 傾斜角速度
+        steerAngle: 0,         // 龍頭轉向視覺角度 (-1 ~ +1)
+        wobbleSeed: 0,         // 低速不穩定隨機晃動相位
+        alarmFlash: 0          // 管線警報閃爍計時
+      };
+
+      // 操控輸入狀態 (支援多點觸控與鍵盤同時操作)
+      const input = {
+        throttle: false,
+        left: false,
+        right: false
+      };
+
+      // =========================================================================
+      // 5. 多點觸控與鍵盤事件綁定
+      // =========================================================================
+      function updateButtonVisuals() {
+        btnThrottle.classList.toggle('active', input.throttle);
+        btnLeft.classList.toggle('active', input.left);
+        btnRight.classList.toggle('active', input.right);
+      }
+
+      // 綁定支援多點觸控 (Pointer / Touch / Mouse) 的按鈕事件
+      function bindHoldButton(element, keyName) {
+        const activePointers = new Set();
+
+        const press = (e) => {
+          e.preventDefault();
+          SoundEngine.init();
+          if (e.pointerId !== undefined) {
+            activePointers.add(e.pointerId);
+            try { element.setPointerCapture(e.pointerId); } catch (_) {}
+          } else {
+            activePointers.add('mouse');
+          }
+          input[keyName] = true;
+          updateButtonVisuals();
+        };
+
+        const release = (e) => {
+          e.preventDefault();
+          if (e.pointerId !== undefined) {
+            activePointers.delete(e.pointerId);
+          } else {
+            activePointers.clear();
+          }
+          if (activePointers.size === 0) {
+            input[keyName] = false;
+            updateButtonVisuals();
+          }
+        };
+
+        element.addEventListener('pointerdown', press);
+        element.addEventListener('pointerup', release);
+        element.addEventListener('pointercancel', release);
+        element.addEventListener('lostpointercapture', () => {
+          activePointers.clear();
+          input[keyName] = false;
+          updateButtonVisuals();
+        });
+      }
+
+      bindHoldButton(btnThrottle, 'throttle');
+      bindHoldButton(btnLeft, 'left');
+      bindHoldButton(btnRight, 'right');
+
+      // 鍵盤控制支援
+      window.addEventListener('keydown', (e) => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+          e.preventDefault();
+        }
+        SoundEngine.init();
+
+        if (gameState.phase === 'RESULT' && (e.code === 'Space' || e.code === 'Enter')) {
+          resetAndStartGame();
+          return;
+        }
+        if (gameState.phase === 'START' && (e.code === 'Space' || e.code === 'Enter')) {
+          resetAndStartGame();
+          return;
+        }
+
+        if (e.code === 'ArrowUp' || e.code === 'KeyW') input.throttle = true;
+        if (e.code === 'ArrowLeft' || e.code === 'KeyA') input.left = true;
+        if (e.code === 'ArrowRight' || e.code === 'KeyD') input.right = true;
+        updateButtonVisuals();
+      });
+
+      window.addEventListener('keyup', (e) => {
+        if (e.code === 'ArrowUp' || e.code === 'KeyW') input.throttle = false;
+        if (e.code === 'ArrowLeft' || e.code === 'KeyA') input.left = false;
+        if (e.code === 'ArrowRight' || e.code === 'KeyD') input.right = false;
+        updateButtonVisuals();
+      });
+
+      // 視窗失焦時自動放開按鍵，避免卡鍵
+      window.addEventListener('blur', () => {
+        input.throttle = false;
+        input.left = false;
+        input.right = false;
+        updateButtonVisuals();
+      });
+
+      soundBtn.addEventListener('click', () => {
+        SoundEngine.toggleMute();
+      });
+
+      startBtn.addEventListener('click', () => {
+        resetAndStartGame();
+      });
+
+      retryBtn.addEventListener('click', () => {
+        resetAndStartGame();
+      });
+
+      // =========================================================================
+      // 6. 遊戲流程控制 (開始 / 重置 / 判決)
+      // =========================================================================
+      function resetAndStartGame() {
+        SoundEngine.init();
+        SoundEngine.startEngine();
+
+        gameState.phase = 'PLAYING';
+        gameState.hasStartedMoving = false;
+        gameState.elapsedTime = 0;
+        gameState.distance = 0;
+        gameState.speed = 0;
+        gameState.lateralPos = 0;
+        gameState.tilt = 0;
+        gameState.tiltVelocity = 0;
+        gameState.steerAngle = 0;
+        gameState.wobbleSeed = Math.random() * 100;
+        gameState.alarmFlash = 0;
+
+        input.throttle = false;
+        input.left = false;
+        input.right = false;
+        updateButtonVisuals();
+
+        startModal.classList.add('hidden');
+        resultModal.classList.add('hidden');
+
+        statusBanner.textContent = '🏁 起跑線就位！按住左側「催油門」出發！';
+        statusBanner.style.opacity = '1';
+        updateHUD();
+      }
+
+      function finishGame(isPass, titleText, commentText) {
+        gameState.phase = 'RESULT';
+        gameState.alarmFlash = isPass ? 0 : 1;
+
+        input.throttle = false;
+        input.left = false;
+        input.right = false;
+        updateButtonVisuals();
+
+        if (isPass) {
+          SoundEngine.playSuccess();
+          resultBadge.className = 'modal-badge badge-pass';
+          resultBadge.textContent = '🎉 路考通過！順利過關';
+        } else {
+          SoundEngine.playWhistle();
+          resultBadge.className = 'modal-badge badge-fail';
+          resultBadge.textContent = '📣 考官吹哨！扣 32 分出局';
+        }
+
+        resultTitle.textContent = titleText;
+        resTime.textContent = `${gameState.elapsedTime.toFixed(2)} 秒`;
+        resDist.textContent = `${Math.min(gameState.distance, TOTAL_DISTANCE).toFixed(1)} m`;
+        resComment.textContent = `📢 監理站考官：${commentText}`;
+
+        resultModal.classList.remove('hidden');
+      }
+
+      // =========================================================================
+      // 7. 物理模擬更新 (每幀 dt 更新)
+      // =========================================================================
+      function updatePhysics(dt) {
+        if (gameState.phase !== 'PLAYING') {
+          SoundEngine.updateEngine(0, false, false);
+          return;
+        }
+
+        // 限制最大 dt 防止切換分頁時物理暴衝
+        const safeDt = Math.min(dt, 0.05);
+
+        // 1. 偵測是否開始起步
+        if (!gameState.hasStartedMoving) {
+          if (input.throttle) {
+            gameState.hasStartedMoving = true;
+            statusBanner.textContent = '⚖️ 保持平衡！撐滿 7.00 秒再壓過終點！';
+          } else {
+            // 尚未起步前在起跑線怠速等待，雙腳撐地不會倒
+            SoundEngine.updateEngine(0, false, true);
+            return;
+          }
+        }
+
+        // 2. 計時器推進
+        gameState.elapsedTime += safeDt;
+        if (gameState.elapsedTime >= TARGET_TIME) {
+          statusBanner.textContent = '✅ 已滿 7.00 秒！穩穩騎過終點線就過關了！';
+        }
+
+        // 3. 縱向速度物理 (油門加速 vs 自然滑行滾動阻力)
+        const ACCEL = 2.55;         // 催油門加速度 (m/s^2)
+        const DRAG = 1.05;          // 放開油門減速阻力 (m/s^2)
+        const MAX_SPEED = 4.5;      // 最高限速 (~16 km/h)
+
+        if (input.throttle) {
+          gameState.speed = Math.min(MAX_SPEED, gameState.speed + ACCEL * safeDt);
+        } else {
+          gameState.speed = Math.max(0, gameState.speed - DRAG * safeDt);
+        }
+
+        gameState.distance += gameState.speed * safeDt;
+        SoundEngine.updateEngine(gameState.speed, input.throttle, true);
+
+        // 判定：起步後速度完全歸零 -> 腳著地定竿失敗
+        if (gameState.speed <= 0.02 && !input.throttle && gameState.elapsedTime > 0.35) {
+          finishGame(false, '速度歸零！雙腳落地！', getRandomComment(COMMENTS.fellDown));
+          return;
+        }
+
+        // 4. 橫向平衡與龍頭微調物理 (核心樂趣所在)
+        // 車速越慢，陀螺儀效應越弱，自然左右不穩定度越高！
+        const speedStability = Math.min(1, gameState.speed / 2.6); // 0(極慢最晃) ~ 1(較穩)
+        const instabilityFactor = 1.45 - speedStability * 0.95;    // 慢速時不穩定係數高達 1.45
+
+        gameState.wobbleSeed += safeDt * (2.6 + (1 - speedStability) * 2.2);
+
+        // 多重正弦波疊加產生自然的低速龍頭微晃干擾
+        const wobbleForce =
+          (Math.sin(gameState.wobbleSeed * 1.7) * 0.65 +
+           Math.cos(gameState.wobbleSeed * 2.9) * 0.45) *
+          instabilityFactor * 0.85;
+
+        // 玩家左右微調力道
+        const steerInput = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+        // 平滑更新龍頭視覺轉角
+        gameState.steerAngle += (steerInput - gameState.steerAngle) * Math.min(1, safeDt * 14);
+
+        // 傾斜角速度計算：
+        // - 重力傾倒效應 (車身越斜倒越快)
+        // - 低速隨機晃動
+        // - 玩家反向打龍頭修正力 (counter-steering / balance correction)
+        const gravityPull = gameState.tilt * (1.25 + (1 - speedStability) * 0.6);
+        const playerCorrection = steerInput * 2.35;
+
+        gameState.tiltVelocity += (gravityPull + wobbleForce + playerCorrection) * safeDt;
+        // 阻尼讓操作手感更跟手，不會過度滑溜
+        gameState.tiltVelocity *= Math.pow(0.18, safeDt);
+
+        gameState.tilt += gameState.tiltVelocity * safeDt;
+
+        // 車身傾斜會帶動車輛往該方向橫向偏移 (有速度時才會產生橫向位移)
+        const lateralSpeed = gameState.tilt * (0.16 + gameState.speed * 0.11);
+        gameState.lateralPos += lateralSpeed * safeDt;
+
+        // 5. 檢查三大判定條件
+        // (A) 傾斜角度過大 -> 倒車失敗
+        if (Math.abs(gameState.tilt) >= MAX_TILT) {
+          finishGame(false, '重心不穩！直接倒車！', getRandomComment(COMMENTS.fellDown));
+          return;
+        }
+
+        // (B) 橫向偏離超過白線 (半寬 0.20m) -> 壓線出界失敗
+        if (Math.abs(gameState.lateralPos) >= LANE_HALF_WIDTH) {
+          finishGame(false, '壓到白線！管線逼逼叫！', getRandomComment(COMMENTS.outOfBounds));
+          return;
+        }
+
+        // (C) 通過 15.0m 終點線 -> 檢查是否滿 7.00 秒
+        if (gameState.distance >= TOTAL_DISTANCE) {
+          if (gameState.elapsedTime >= TARGET_TIME) {
+            finishGame(true, '恭喜及格！穩如老狗！', getRandomComment(COMMENTS.pass));
+          } else {
+            finishGame(false, `太快啦！只有 ${gameState.elapsedTime.toFixed(2)} 秒！`, getRandomComment(COMMENTS.tooFast));
+          }
+          return;
+        }
+      }
+
+      // =========================================================================
+      // 8. 更新頂部 HUD 數據與平衡儀表條
+      // =========================================================================
+      function updateHUD() {
+        hudTime.textContent = `${gameState.elapsedTime.toFixed(2)} s`;
+        if (gameState.elapsedTime >= TARGET_TIME) {
+          hudTime.classList.remove('timer-wait');
+          hudTime.classList.add('timer-pass');
+        } else {
+          hudTime.classList.remove('timer-pass');
+          hudTime.classList.add('timer-wait');
+        }
+
+        const remainDist = Math.max(0, TOTAL_DISTANCE - gameState.distance);
+        hudDist.textContent = `${remainDist.toFixed(1)} m`;
+
+        const kmh = Math.round(gameState.speed * 3.6);
+        hudSpeed.textContent = `${kmh} km/h`;
+
+        // 綜合車身傾斜與跑道偏移量顯示在平衡儀表條上 (50% 為正中央)
+        const combinedRisk = (gameState.tilt * 0.65) + (gameState.lateralPos / LANE_HALF_WIDTH) * 0.45;
+        const clampedRisk = Math.max(-1, Math.min(1, combinedRisk));
+        const needlePercent = 50 + clampedRisk * 46;
+        balanceNeedle.style.left = `${needlePercent}%`;
+      }
+
+      // =========================================================================
+      // 9. HTML5 Canvas 第一視角仿真台灣監理站考場繪製
+      // =========================================================================
+      function resizeCanvas() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(window.innerWidth * dpr);
+        canvas.height = Math.floor(window.innerHeight * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+
+      function renderScene() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+
+        ctx.clearRect(0, 0, w, h);
+
+        // 視角隨車身傾斜微幅翻滾 (模擬第一視角頭部與車身傾斜)
+        const camRoll = gameState.tilt * 0.085;
+        // 視角水平偏移 (車身往右偏，畫面景物往左移)
+        const camOffsetX = -(gameState.lateralPos / LANE_HALF_WIDTH) * (w * 0.16);
+        const horizonY = h * 0.40;
+
+        ctx.save();
+        ctx.translate(w / 2, horizonY);
+        ctx.rotate(camRoll);
+        ctx.translate(-w / 2 + camOffsetX, -horizonY);
+
+        // --- 1. 台灣晴朗藍天與白雲 ---
+        // --- 1. 莫蘭迪晴朗灰藍天空與柔霧白雲 ---
+        const skyGrad = ctx.createLinearGradient(0, -100, 0, horizonY);
+        skyGrad.addColorStop(0, '#7B8D93');
+        skyGrad.addColorStop(0.55, '#9FB0B6');
+        skyGrad.addColorStop(1, '#DCE2E0');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(-w, -h * 0.5, w * 3, horizonY + h * 0.5);
+
+        // 遠處低對比柔霧白雲
+        drawCloud(w * 0.22, horizonY * 0.36, 48);
+        drawCloud(w * 0.76, horizonY * 0.28, 60);
+        drawCloud(w * 0.52, horizonY * 0.48, 36);
+
+        // --- 2. 遠處台灣監理站考場建築與圍牆 (莫蘭迪霧霾綠與燕麥米灰) ---
+        drawDMVBackground(w, horizonY);
+
+        // --- 3. 考場柏油地面與透視直線七秒車道 ---
+        drawTrackPerspective(w, h, horizonY);
+
+        ctx.restore();
+
+        // --- 4. 壓線/失敗莫蘭迪豆沙粉紅色警報閃光 ---
+        if (gameState.alarmFlash > 0) {
+          ctx.fillStyle = `rgba(200, 138, 132, ${gameState.alarmFlash * 0.34})`;
+          ctx.fillRect(0, 0, w, h);
+          gameState.alarmFlash = Math.max(0, gameState.alarmFlash - 0.02);
+        }
+
+        // --- 5. 第一視角前景：速克達機車龍頭、儀表板、後照鏡 ---
+        drawScooterCockpit(w, h);
+      }
+
+      function drawCloud(cx, cy, size) {
+        ctx.fillStyle = 'rgba(242, 239, 233, 0.72)';
+        ctx.beginPath();
+        ctx.arc(cx, cy, size * 0.5, 0, Math.PI * 2);
+        ctx.arc(cx + size * 0.42, cy - size * 0.1, size * 0.42, 0, Math.PI * 2);
+        ctx.arc(cx + size * 0.82, cy + size * 0.05, size * 0.36, 0, Math.PI * 2);
+        ctx.arc(cx - size * 0.38, cy + size * 0.08, size * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function drawDMVBackground(w, horizonY) {
+        // 遠處霧霾綠樹林與遠山輪廓
+        ctx.fillStyle = '#8FA395';
+        ctx.fillRect(-w, horizonY - 26, w * 3, 26);
+
+        // 監理站極簡建築外牆 (燕麥米白)
+        const bldgW = Math.min(460, w * 0.65);
+        const bldgX = (w - bldgW) / 2;
+        const bldgH = 54;
+
+        ctx.fillStyle = '#EAE6DF';
+        ctx.fillRect(bldgX, horizonY - bldgH, bldgW, bldgH);
+
+        // 莫蘭迪靜謐灰藍斜屋頂
+        ctx.fillStyle = '#6A7B83';
+        ctx.beginPath();
+        ctx.moveTo(bldgX - 14, horizonY - bldgH);
+        ctx.lineTo(bldgX + bldgW / 2, horizonY - bldgH - 18);
+        ctx.lineTo(bldgX + bldgW + 14, horizonY - bldgH);
+        ctx.closePath();
+        ctx.fill();
+
+        // 監理站莫蘭迪豆沙紅布條招牌
+        ctx.fillStyle = '#B57671';
+        ctx.fillRect(bldgX + bldgW * 0.15, horizonY - bldgH + 8, bldgW * 0.7, 16);
+        ctx.fillStyle = '#F2EFE9';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('交通部公路局機車考驗場｜直線平衡駕駛', w / 2, horizonY - bldgH + 19);
+
+        // 考場暖灰褐圍牆
+        ctx.fillStyle = '#B8B0A4';
+        ctx.fillRect(-w, horizonY - 14, w * 3, 14);
+      }
+
+      function drawTrackPerspective(w, h, horizonY) {
+        // 溫潤深灰柏油路底色
+        const roadGrad = ctx.createLinearGradient(0, horizonY, 0, h);
+        roadGrad.addColorStop(0, '#6B6E70');
+        roadGrad.addColorStop(1, '#4C4F52');
+        ctx.fillStyle = roadGrad;
+        ctx.fillRect(-w, horizonY, w * 3, h - horizonY + 200);
+
+        // 透視投影輔助函式：
+        // worldZ 為距離騎士前方的公尺數 (0 = 騎士腳下, 15 = 終點線)
+        const eyeHeight = 1.18;  // 騎士視線高度 (公尺)
+        const focal = h * 0.78;    // 透視焦距
+        const nearZ = 0.65;        // 最近裁剪距離
+
+        function projectZ(worldZ) {
+          const z = Math.max(nearZ, worldZ);
+          const screenY = horizonY + (eyeHeight * focal) / z;
+          const scale = focal / z;
+          return { y: screenY, scale };
+        }
+
+        // 1. 繪製兩側安全島草地 (莫蘭迪鼠尾草綠)
+        const pNear = projectZ(nearZ);
+        const pFar = projectZ(24);
+
+        const outerHalfW = 2.6; // 兩側防撞護欄距離中心 2.6m
+        // 左側鼠尾草綠地
+        ctx.fillStyle = '#9AA89B';
+        ctx.beginPath();
+        ctx.moveTo(-w, pNear.y);
+        ctx.lineTo(w / 2 - outerHalfW * pNear.scale, pNear.y);
+        ctx.lineTo(w / 2 - outerHalfW * pFar.scale, pFar.y);
+        ctx.lineTo(-w, pFar.y);
+        ctx.closePath();
+        ctx.fill();
+
+        // 右側鼠尾草綠地
+        ctx.beginPath();
+        ctx.moveTo(w * 2, pNear.y);
+        ctx.lineTo(w / 2 + outerHalfW * pNear.scale, pNear.y);
+        ctx.lineTo(w / 2 + outerHalfW * pFar.scale, pFar.y);
+        ctx.lineTo(w * 2, pFar.y);
+        ctx.closePath();
+        ctx.fill();
+
+        // 2. 路面滾動距離標記與兩側莫蘭迪豆沙粉／燕麥白防撞柱
+        for (let m = -1; m <= 22; m += 1) {
+          const relZ = m - (gameState.distance % 1);
+          if (relZ < nearZ) continue;
+          const p = projectZ(relZ);
+
+          // 路面橫向微細紋理線
+          ctx.strokeStyle = 'rgba(242, 239, 233, 0.08)';
+          ctx.lineWidth = Math.max(1, 1.5 * (p.scale / 200));
+          ctx.beginPath();
+          ctx.moveTo(w / 2 - outerHalfW * p.scale, p.y);
+          ctx.lineTo(w / 2 + outerHalfW * p.scale, p.y);
+          ctx.stroke();
+
+          // 兩側低飽和防撞柱
+          const isTerracotta = Math.floor(m + gameState.distance) % 2 === 0;
+          const postH = Math.max(4, 0.55 * p.scale);
+          const postW = Math.max(2, 0.09 * p.scale);
+
+          ctx.fillStyle = isTerracotta ? '#C88A84' : '#EAE6DF';
+          ctx.fillRect(w / 2 - outerHalfW * p.scale - postW, p.y - postH, postW, postH);
+          ctx.fillRect(w / 2 + outerHalfW * p.scale, p.y - postH, postW, postH);
+        }
+
+        // 3. 直線七秒核心車道 (寬度 0.40m -> 半寬 0.20m)
+        const trackStartRelZ = Math.max(nearZ, -gameState.distance);
+        const trackEndRelZ = Math.max(nearZ, TOTAL_DISTANCE - gameState.distance + 2.5);
+
+        const pTrackNear = projectZ(trackStartRelZ);
+        const pTrackFar = projectZ(trackEndRelZ);
+
+        // 車道內部溫潤深灰柏油底
+        ctx.fillStyle = '#3E4246';
+        ctx.beginPath();
+        ctx.moveTo(w / 2 - LANE_HALF_WIDTH * pTrackNear.scale, pTrackNear.y);
+        ctx.lineTo(w / 2 + LANE_HALF_WIDTH * pTrackNear.scale, pTrackNear.y);
+        ctx.lineTo(w / 2 + LANE_HALF_WIDTH * pTrackFar.scale, pTrackFar.y);
+        ctx.lineTo(w / 2 - LANE_HALF_WIDTH * pTrackFar.scale, pTrackFar.y);
+        ctx.closePath();
+        ctx.fill();
+
+        // 車道中央奶油杏黃虛線導引線
+        ctx.strokeStyle = 'rgba(216, 195, 158, 0.48)';
+        ctx.setLineDash([12, 14]);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(w / 2, pTrackNear.y);
+        ctx.lineTo(w / 2, pTrackFar.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 左右兩條「燕麥米白標線 + 深暖灰感應管線」(壓線即扣分)
+        const lineWNear = Math.max(3, 0.045 * pTrackNear.scale);
+        const lineWFar = Math.max(1.5, 0.045 * pTrackFar.scale);
+
+        // 左白線
+        ctx.fillStyle = '#F2EFE9';
+        ctx.beginPath();
+        ctx.moveTo(w / 2 - LANE_HALF_WIDTH * pTrackNear.scale - lineWNear, pTrackNear.y);
+        ctx.lineTo(w / 2 - LANE_HALF_WIDTH * pTrackNear.scale, pTrackNear.y);
+        ctx.lineTo(w / 2 - LANE_HALF_WIDTH * pTrackFar.scale, pTrackFar.y);
+        ctx.lineTo(w / 2 - LANE_HALF_WIDTH * pTrackFar.scale - lineWFar, pTrackFar.y);
+        ctx.closePath();
+        ctx.fill();
+
+        // 右白線
+        ctx.beginPath();
+        ctx.moveTo(w / 2 + LANE_HALF_WIDTH * pTrackNear.scale, pTrackNear.y);
+        ctx.lineTo(w / 2 + LANE_HALF_WIDTH * pTrackNear.scale + lineWNear, pTrackNear.y);
+        ctx.lineTo(w / 2 + LANE_HALF_WIDTH * pTrackFar.scale + lineWFar, pTrackFar.y);
+        ctx.lineTo(w / 2 + LANE_HALF_WIDTH * pTrackFar.scale, pTrackFar.y);
+        ctx.closePath();
+        ctx.fill();
+
+        // 深暖灰管線感應條 (緊貼白線外側)
+        ctx.strokeStyle = '#2B2E31';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(w / 2 - LANE_HALF_WIDTH * pTrackNear.scale - lineWNear - 2, pTrackNear.y);
+        ctx.lineTo(w / 2 - LANE_HALF_WIDTH * pTrackFar.scale - lineWFar - 1, pTrackFar.y);
+        ctx.moveTo(w / 2 + LANE_HALF_WIDTH * pTrackNear.scale + lineWNear + 2, pTrackNear.y);
+        ctx.lineTo(w / 2 + LANE_HALF_WIDTH * pTrackFar.scale + lineWFar + 1, pTrackFar.y);
+        ctx.stroke();
+
+        // 4. 起跑線標示 (距離 0.0m - 奶油杏黃)
+        const startRelZ = 0 - gameState.distance;
+        if (startRelZ >= nearZ) {
+          const pStart = projectZ(startRelZ);
+          const halfW = LANE_HALF_WIDTH * pStart.scale;
+          ctx.fillStyle = '#D8C39E';
+          ctx.fillRect(w / 2 - halfW, pStart.y - 3, halfW * 2, 6);
+        }
+
+        // 5. 終點線標示 (距離 15.0m) 與左右終點感應柱
+        const finishRelZ = TOTAL_DISTANCE - gameState.distance;
+        if (finishRelZ >= nearZ) {
+          const pFin = projectZ(finishRelZ);
+          const halfW = LANE_HALF_WIDTH * pFin.scale;
+
+          // 終點燕麥白與深暖灰方格線
+          const squares = 8;
+          const sqW = (halfW * 2) / squares;
+          const sqH = Math.max(4, 0.14 * pFin.scale);
+          for (let i = 0; i < squares; i++) {
+            ctx.fillStyle = i % 2 === 0 ? '#F2EFE9' : '#3E4246';
+            ctx.fillRect(w / 2 - halfW + i * sqW, pFin.y - sqH / 2, sqW, sqH);
+          }
+
+          // 終點線兩側感應光電柱與「終點 15m」牌子
+          const gateH = Math.max(18, 0.95 * pFin.scale);
+          const gateW = Math.max(4, 0.08 * pFin.scale);
+          ctx.fillStyle = '#8FA395';
+          ctx.fillRect(w / 2 - halfW - gateW * 2, pFin.y - gateH, gateW, gateH);
+          ctx.fillRect(w / 2 + halfW + gateW, pFin.y - gateH, gateW, gateH);
+
+          // 橫跨上方的終點指示牌 (未滿7秒豆沙粉、滿7秒霧霾綠)
+          if (pFin.scale > 22) {
+            const signW = Math.max(70, halfW * 2.4);
+            const signH = Math.max(16, 0.24 * pFin.scale);
+            ctx.fillStyle = gameState.elapsedTime >= TARGET_TIME ? '#8FA395' : '#C88A84';
+            ctx.fillRect(w / 2 - signW / 2, pFin.y - gateH - signH, signW, signH);
+            ctx.fillStyle = '#F2EFE9';
+            ctx.font = `bold ${Math.max(10, Math.floor(signH * 0.58))}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillText('終點 15m', w / 2, pFin.y - gateH - signH * 0.28);
+          }
+        }
+      }
+
+      // =========================================================================
+      // 10. 繪製第一視角前景：莫蘭迪極簡質感速克達機車龍頭、儀表板、左右後照鏡
+      // =========================================================================
+      function drawScooterCockpit(w, h) {
+        const cx = w / 2;
+        const baseY = h - 18;
+
+        // 龍頭隨車身傾斜 + 玩家左右轉向動態旋轉
+        const handleRot = gameState.tilt * 0.16 + gameState.steerAngle * 0.14;
+        const handleShiftX = gameState.steerAngle * 22;
+
+        ctx.save();
+        ctx.translate(cx + handleShiftX, baseY);
+        ctx.rotate(handleRot);
+
+        const barHalfW = Math.min(250, w * 0.42);
+
+        // --- 左右後照鏡支架與鏡面 ---
+        [-1, 1].forEach((side) => {
+          const mirrorBaseX = side * (barHalfW * 0.62);
+          const mirrorHeadX = side * (barHalfW * 0.88);
+          const mirrorHeadY = -148;
+
+          // 後照鏡暖灰支架
+          ctx.strokeStyle = '#6E6A63';
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.moveTo(mirrorBaseX, -52);
+          ctx.lineTo(mirrorHeadX, mirrorHeadY);
+          ctx.stroke();
+
+          // 後照鏡外殼 (溫潤深灰)
+          ctx.fillStyle = '#3E4246';
+          ctx.beginPath();
+          ctx.ellipse(mirrorHeadX, mirrorHeadY, 34, 21, side * -0.15, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 後照鏡鏡面反射 (莫蘭迪灰藍天空與後方路面倒影)
+          const mirrorGrad = ctx.createLinearGradient(0, mirrorHeadY - 18, 0, mirrorHeadY + 18);
+          mirrorGrad.addColorStop(0, '#9FB0B6');
+          mirrorGrad.addColorStop(0.55, '#DCE2E0');
+          mirrorGrad.addColorStop(0.56, '#7C7E80');
+          mirrorGrad.addColorStop(1, '#585B5E');
+          ctx.fillStyle = mirrorGrad;
+          ctx.beginPath();
+          ctx.ellipse(mirrorHeadX, mirrorHeadY, 29, 17, side * -0.15, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // --- 左右手把與煞車拉桿 ---
+        ctx.fillStyle = '#4B4E52';
+        ctx.strokeStyle = '#8C867D';
+        ctx.lineWidth = 2;
+
+        // 左握把
+        roundRect(ctx, -barHalfW, -54, barHalfW * 0.48, 26, 10, true, true);
+        // 右油門握把
+        ctx.fillStyle = input.throttle ? '#68655E' : '#4B4E52';
+        roundRect(ctx, barHalfW * 0.52, -54, barHalfW * 0.48, 26, 10, true, true);
+
+        // 霧面銀灰煞車拉桿
+        ctx.strokeStyle = '#D3CCC0';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(-barHalfW * 0.55, -56);
+        ctx.lineTo(-barHalfW * 0.92, -66);
+        ctx.moveTo(barHalfW * 0.55, -56);
+        ctx.lineTo(barHalfW * 0.92, -66);
+        ctx.stroke();
+
+        // --- 中央速克達龍頭外殼 (莫蘭迪燕麥灰白文青車殼) ---
+        const cowlW = Math.min(230, w * 0.46);
+        const cowlH = 92;
+
+        const cowlGrad = ctx.createLinearGradient(0, -cowlH, 0, 20);
+        cowlGrad.addColorStop(0, '#EAE6DF');
+        cowlGrad.addColorStop(0.45, '#D5CFC4');
+        cowlGrad.addColorStop(1, '#B8B0A4');
+
+        ctx.fillStyle = cowlGrad;
+        ctx.strokeStyle = '#8C867D';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(-cowlW * 0.55, 20);
+        ctx.lineTo(-cowlW * 0.48, -cowlH + 18);
+        ctx.quadraticCurveTo(0, -cowlH - 18, cowlW * 0.48, -cowlH + 18);
+        ctx.lineTo(cowlW * 0.55, 20);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // 儀表板液晶螢幕框 (溫潤深灰)
+        const dashW = cowlW * 0.64;
+        const dashH = 48;
+        ctx.fillStyle = '#3E4246';
+        roundRect(ctx, -dashW / 2, -cowlH + 14, dashW, dashH, 12, true, false);
+
+        // 儀表板方向燈指示燈 (莫蘭迪霧霾綠)
+        ctx.fillStyle = input.left ? '#9CC4A8' : '#536458';
+        ctx.beginPath();
+        ctx.moveTo(-dashW * 0.36, -cowlH + 38);
+        ctx.lineTo(-dashW * 0.26, -cowlH + 31);
+        ctx.lineTo(-dashW * 0.26, -cowlH + 45);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = input.right ? '#9CC4A8' : '#536458';
+        ctx.beginPath();
+        ctx.moveTo(dashW * 0.36, -cowlH + 38);
+        ctx.lineTo(dashW * 0.26, -cowlH + 31);
+        ctx.lineTo(dashW * 0.26, -cowlH + 45);
+        ctx.closePath();
+        ctx.fill();
+
+        // 儀表板中央時速數字 (奶油杏黃)
+        ctx.fillStyle = '#E8D7B9';
+        ctx.font = '900 18px monospace';
+        ctx.textAlign = 'center';
+        const displayKmh = Math.round(gameState.speed * 3.6);
+        ctx.fillText(`${displayKmh}`, 0, -cowlH + 40);
+
+        ctx.fillStyle = '#B8B0A4';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText('km/h', 0, -cowlH + 52);
+
+        ctx.restore();
+      }
+
+      function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+        if (fill) ctx.fill();
+        if (stroke) ctx.stroke();
+      }
+
+      // =========================================================================
+      // 11. 主遊戲迴圈 (RequestAnimationFrame)
+      // =========================================================================
+      let lastTimestamp = performance.now();
+
+      function gameLoop(now) {
+        const dt = (now - lastTimestamp) / 1000;
+        lastTimestamp = now;
+
+        updatePhysics(dt);
+        if (gameState.phase === 'PLAYING') {
+          updateHUD();
+        }
+        renderScene();
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      // 啟動主迴圈
+      requestAnimationFrame(gameLoop);
+    });
+  </script>
+</body>
+</html>
