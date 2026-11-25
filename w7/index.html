@@ -1,0 +1,1969 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>台灣監理站｜機車直線七秒模擬器</title>
+  <!-- 依規範保留外部樣式與腳本標籤，同時內嵌完整 CSS 與 JS 確保單檔立即可運行 -->
+  <link rel="stylesheet" href="style.css" />
+  <script src="script.js" defer></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ==========================================================================
+       全域與莫蘭迪（Morandi）低飽和溫柔插畫視覺風格
+       ========================================================================== */
+    :root {
+      --morandi-bg-outer: #d9dfe2;
+      --morandi-cream: #f4efea;
+      --morandi-oatmeal: #eae2d8;
+      --morandi-sage: #9caf9e;
+      --morandi-sage-dark: #7a907d;
+      --morandi-sage-light: #dce5dc;
+      --morandi-blue: #95a7b3;
+      --morandi-blue-dark: #758996;
+      --morandi-blue-light: #dce4e8;
+      --morandi-terracotta: #d49a89;
+      --morandi-terracotta-dark: #b87c6b;
+      --morandi-mustard: #dfc38c;
+      --morandi-text: #4a4642;
+      --morandi-muted: #78726b;
+      --morandi-border: #d5cdc3;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--morandi-bg-outer);
+      color: var(--morandi-text);
+      font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+    }
+
+    /* 主容器：滿版直向彈性配置，適配手機與桌面 */
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100dvh;
+      max-width: 720px;
+      margin: 0 auto;
+      background: var(--morandi-cream);
+      box-shadow: 0 0 36px rgba(74, 70, 66, 0.14);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ==========================================================================
+       頂部莫蘭迪監理站考場招牌與 HUD 儀表板（手機版單行防換行優化）
+       ========================================================================== */
+    .top-header {
+      background: linear-gradient(180deg, #faf7f4 0%, #f1ebe3 100%);
+      border-bottom: 2.5px solid var(--morandi-sage);
+      padding: 7px 10px 8px;
+      z-index: 20;
+      flex-shrink: 0;
+      box-shadow: 0 3px 12px rgba(74, 70, 66, 0.06);
+    }
+
+    .title-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 6px;
+      min-width: 0;
+    }
+
+    .station-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 900;
+      font-size: clamp(0.84rem, 3.7vw, 1.08rem);
+      letter-spacing: -0.2px;
+      color: #48564a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .station-title-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .station-tag {
+      background: linear-gradient(135deg, #9caf9e 0%, #839985 100%);
+      color: #fbf9f6;
+      font-size: clamp(0.66rem, 2.8vw, 0.76rem);
+      font-weight: 900;
+      padding: 2px 7px;
+      border-radius: 7px;
+      box-shadow: 0 2px 0 #6b806d;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .audio-btn {
+      background: var(--morandi-oatmeal);
+      border: 1.5px solid var(--morandi-border);
+      color: var(--morandi-text);
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: clamp(0.72rem, 3vw, 0.8rem);
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex-shrink: 0;
+      white-space: nowrap;
+      transition: transform 0.1s, background 0.15s;
+    }
+
+    .audio-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* 數據儀表三格 */
+    .hud-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr 0.95fr;
+      gap: 6px;
+      margin-bottom: 7px;
+    }
+
+    .hud-card {
+      background: #fbf9f6;
+      border: 1.5px solid #dfd7cd;
+      border-radius: 12px;
+      padding: 4px 6px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(74, 70, 66, 0.04);
+    }
+
+    .hud-label {
+      font-size: 0.67rem;
+      color: var(--morandi-muted);
+      font-weight: 700;
+      display: block;
+      margin-bottom: 1px;
+      white-space: nowrap;
+    }
+
+    .hud-value {
+      font-family: 'Orbitron', 'Noto Sans TC', monospace;
+      font-size: 1.22rem;
+      font-weight: 900;
+      color: var(--morandi-text);
+      line-height: 1.15;
+    }
+
+    .hud-value.ready-green {
+      color: #6b8b6e;
+      text-shadow: 0 0 10px rgba(156, 175, 158, 0.45);
+    }
+
+    .hud-value.warn-amber {
+      color: #b98952;
+    }
+
+    .hud-unit {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--morandi-muted);
+      margin-left: 2px;
+    }
+
+    /* ==========================================================================
+       頂部醒目莫蘭迪平衡儀表條
+       ========================================================================== */
+    .balance-wrapper {
+      background: #fbf9f6;
+      border: 1.5px solid #dfd7cd;
+      border-radius: 12px;
+      padding: 5px 10px 7px;
+      box-shadow: 0 2px 6px rgba(74, 70, 66, 0.04);
+    }
+
+    .balance-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--morandi-muted);
+    }
+
+    .balance-status-text {
+      color: #6b8b6e;
+      font-weight: 900;
+    }
+
+    .balance-status-text.danger {
+      color: #b86b5b;
+      animation: blinkFast 0.38s infinite alternate;
+    }
+
+    @keyframes blinkFast {
+      from { opacity: 1; }
+      to { opacity: 0.45; }
+    }
+
+    .balance-track {
+      position: relative;
+      width: 100%;
+      height: 15px;
+      border-radius: 999px;
+      background: linear-gradient(
+        90deg,
+        #d49a89 0%,
+        #d49a89 14%,
+        #dfc38c 14%,
+        #dfc38c 32%,
+        #9caf9e 32%,
+        #9caf9e 68%,
+        #dfc38c 68%,
+        #dfc38c 86%,
+        #d49a89 86%,
+        #d49a89 100%
+      );
+      box-shadow: inset 0 2px 4px rgba(74, 70, 66, 0.14);
+      border: 1.5px solid #cfc6bb;
+      overflow: visible;
+    }
+
+    .balance-center-tick {
+      position: absolute;
+      left: 50%;
+      top: -2px;
+      bottom: -2px;
+      width: 2.5px;
+      background: #fbf9f6;
+      transform: translateX(-50%);
+      box-shadow: 0 0 3px rgba(74, 70, 66, 0.28);
+    }
+
+    .balance-needle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 14px;
+      height: 21px;
+      background: #fbf9f6;
+      border: 3px solid #59534d;
+      border-radius: 6px;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 2px 6px rgba(74, 70, 66, 0.28);
+      transition: background-color 0.1s;
+      z-index: 3;
+    }
+
+    /* ==========================================================================
+       中央遊戲畫布與考官即時對話泡泡
+       ========================================================================== */
+    .canvas-stage {
+      position: relative;
+      flex: 1 1 auto;
+      width: 100%;
+      background: #c5d1d8;
+      overflow: hidden;
+    }
+
+    #gameCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* 考官場邊即時提醒氣泡 */
+    .examiner-bubble {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(251, 249, 246, 0.95);
+      color: var(--morandi-text);
+      border: 2px solid #d5b47c;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      font-weight: 900;
+      box-shadow: 0 4px 12px rgba(74, 70, 66, 0.1);
+      z-index: 15;
+      white-space: nowrap;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* 莫蘭迪柔霧彈窗 */
+    .overlay-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(234, 226, 216, 0.76);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 30;
+    }
+
+    .overlay-modal.hidden {
+      display: none;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 420px;
+      background: #fbf9f6;
+      border: 2.5px solid var(--morandi-sage);
+      border-radius: 22px;
+      padding: 20px 18px 20px;
+      box-shadow: 0 16px 36px rgba(74, 70, 66, 0.15);
+      text-align: center;
+    }
+
+    .modal-badge {
+      display: inline-block;
+      background: var(--morandi-sage-light);
+      color: #546b57;
+      border: 1px solid #b4c5b6;
+      font-weight: 900;
+      font-size: 0.78rem;
+      padding: 3px 12px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+
+    .modal-badge.pass {
+      background: var(--morandi-sage-light);
+      color: #4c6650;
+      border-color: var(--morandi-sage);
+    }
+
+    .modal-badge.fail {
+      background: #f2ded9;
+      color: #9e5849;
+      border-color: var(--morandi-terracotta);
+    }
+
+    .modal-title {
+      font-size: 1.4rem;
+      font-weight: 900;
+      margin-bottom: 12px;
+      color: var(--morandi-text);
+      line-height: 1.25;
+    }
+
+    /* 精簡單條規則卡片 */
+    .rule-single-box {
+      background: var(--morandi-cream);
+      border: 1.5px solid #dfd7cd;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 0.96rem;
+      font-weight: 700;
+      line-height: 1.55;
+      color: #59534d;
+      margin-bottom: 16px;
+    }
+
+    .highlight-amber {
+      color: #b8844c;
+      font-weight: 900;
+    }
+
+    .highlight-green {
+      color: #638266;
+      font-weight: 900;
+    }
+
+    /* 結算戰績數據盒 */
+    .result-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .stat-box {
+      background: var(--morandi-cream);
+      border: 1.5px solid #dfd7cd;
+      border-radius: 12px;
+      padding: 8px;
+    }
+
+    .stat-box .s-label {
+      font-size: 0.72rem;
+      color: var(--morandi-muted);
+      font-weight: 700;
+      display: block;
+    }
+
+    .stat-box .s-val {
+      font-family: 'Orbitron', 'Noto Sans TC', monospace;
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: var(--morandi-text);
+    }
+
+    /* 考官評語框 */
+    .examiner-quote-box {
+      background: #f5ebd9;
+      color: #6e573b;
+      border-left: 5px solid #d5b47c;
+      border-radius: 12px;
+      padding: 10px 12px;
+      text-align: left;
+      margin-bottom: 14px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .examiner-quote-box.pass-quote {
+      border-left-color: var(--morandi-sage);
+      background: #e5ede5;
+      color: #465c49;
+    }
+
+    .examiner-name {
+      display: block;
+      font-size: 0.74rem;
+      opacity: 0.85;
+      margin-bottom: 2px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: center;
+    }
+
+    .action-btn {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 1.02rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 0.1s, filter 0.15s;
+      font-family: inherit;
+    }
+
+    .action-btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: linear-gradient(180deg, #a6b9a8 0%, #8da38f 100%);
+      color: #fbf9f6;
+      text-shadow: 0 1px 2px rgba(62, 79, 64, 0.3);
+      box-shadow: 0 4px 0 #6d826f;
+    }
+
+    /* ==========================================================================
+       底部多點觸控三鍵操控台（莫蘭迪鼠尾草綠催油門 + 莫蘭迪霧霾藍微調）
+       ========================================================================== */
+    .controls-dock {
+      background: linear-gradient(180deg, #faf7f4 0%, #ede6dd 100%);
+      border-top: 2px solid #d6cec4;
+      padding: 10px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+      display: grid;
+      grid-template-columns: 1.25fr 1fr 1fr;
+      gap: 10px;
+      flex-shrink: 0;
+      z-index: 25;
+    }
+
+    .ctrl-btn {
+      position: relative;
+      height: 74px;
+      border-radius: 18px;
+      border: 2px solid transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      font-family: inherit;
+      font-weight: 900;
+      cursor: pointer;
+      touch-action: none;
+      transition: transform 0.06s, box-shadow 0.06s, background 0.08s;
+    }
+
+    /* 催油門（最左側：莫蘭迪鼠尾草綠） */
+    .ctrl-throttle {
+      background: linear-gradient(180deg, #a6b9a8 0%, #8da38f 100%);
+      color: #fbf9f6;
+      text-shadow: 0 1px 2px rgba(58, 74, 60, 0.3);
+      box-shadow: 0 5px 0 #6d826f;
+      border-color: #c2d1c3;
+    }
+
+    .ctrl-throttle.active {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 #6d826f;
+      background: linear-gradient(180deg, #8da38f 0%, #7a907c 100%);
+    }
+
+    /* 左右微調按鈕（莫蘭迪霧霾藍） */
+    .ctrl-steer {
+      background: linear-gradient(180deg, #a2b4c0 0%, #889ca9 100%);
+      color: #fbf9f6;
+      text-shadow: 0 1px 2px rgba(55, 70, 80, 0.28);
+      box-shadow: 0 5px 0 #697d8a;
+      border-color: #c4d1d9;
+    }
+
+    .ctrl-steer.active {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 #697d8a;
+      background: linear-gradient(180deg, #889ca9 0%, #748896 100%);
+    }
+
+    .ctrl-icon {
+      font-size: 1.45rem;
+      line-height: 1;
+    }
+
+    .ctrl-text {
+      font-size: 0.95rem;
+      letter-spacing: 0.5px;
+    }
+
+    .ctrl-sub {
+      font-size: 0.65rem;
+      opacity: 0.92;
+      font-weight: 700;
+    }
+
+    @media (min-width: 640px) {
+      .ctrl-btn {
+        height: 82px;
+      }
+      .hud-value {
+        font-size: 1.42rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- 頂部監理站儀表板 -->
+    <header class="top-header">
+      <div class="title-bar">
+        <div class="station-badge">
+          <span class="station-tag">公路局監理站</span>
+          <span class="station-title-text">機車直線七秒模擬器</span>
+        </div>
+        <button id="audioToggleBtn" class="audio-btn" type="button" aria-label="切換音效">
+          <span id="audioIcon">🔊</span>
+          <span id="audioLabel">音效開</span>
+        </button>
+      </div>
+
+      <!-- 數據三欄：時間、剩餘距離、時速 -->
+      <div class="hud-grid">
+        <div class="hud-card">
+          <span class="hud-label">經過時間 (目標 ≥ 7.00s)</span>
+          <span id="timeDisplay" class="hud-value">0.00</span><span class="hud-unit">s</span>
+        </div>
+        <div class="hud-card">
+          <span class="hud-label">距離終點線</span>
+          <span id="distDisplay" class="hud-value warn-amber">15.0</span><span class="hud-unit">m</span>
+        </div>
+        <div class="hud-card">
+          <span class="hud-label">目前時速</span>
+          <span id="speedDisplay" class="hud-value">0.0</span><span class="hud-unit">km/h</span>
+        </div>
+      </div>
+
+      <!-- 平衡儀表條 -->
+      <div class="balance-wrapper">
+        <div class="balance-header">
+          <span>◀ 偏左傾斜</span>
+          <span id="balanceStatus" class="balance-status-text">車身回正・準備出發</span>
+          <span>偏右傾斜 ▶</span>
+        </div>
+        <div class="balance-track">
+          <div class="balance-center-tick"></div>
+          <div id="balanceNeedle" class="balance-needle"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 遊戲主畫布區 -->
+    <main class="canvas-stage" id="canvasStage">
+      <canvas id="gameCanvas"></canvas>
+
+      <!-- 監理站考官場邊提示氣泡 -->
+      <div id="examinerBubble" class="examiner-bubble">
+        <span>👮‍♂️ 考官：</span>
+        <span id="bubbleText">按住左下角「催油門」出發，撐滿 7 秒！</span>
+      </div>
+
+      <!-- 考前說明彈窗（僅保留第一條核心規則） -->
+      <div id="startModal" class="overlay-modal">
+        <div class="modal-card">
+          <span class="modal-badge">☁️ 莫蘭迪微風模擬路考場</span>
+          <h1 class="modal-title">🛵 機車直線七秒模擬器</h1>
+          <div class="rule-single-box">
+            終點線距離 <span class="highlight-amber">15.0m</span>，撐滿 <span class="highlight-green">7.00s 以上</span> 穩穩壓過終點線即過關！
+          </div>
+          <button id="startGameBtn" class="action-btn btn-primary" type="button">🌿 戴好安全帽，開始路考！</button>
+        </div>
+      </div>
+
+      <!-- 結算成績單彈窗（移除下載按鈕，僅保留再考一次） -->
+      <div id="resultModal" class="overlay-modal hidden">
+        <div class="modal-card">
+          <span id="resultBadge" class="modal-badge fail">考驗失敗・扣 32 分</span>
+          <h2 id="resultTitle" class="modal-title">嗶——！壓線出界！</h2>
+
+          <div class="result-stats">
+            <div class="stat-box">
+              <span class="s-label">最終耗時</span>
+              <span id="finalTimeVal" class="s-val">4.28s</span>
+            </div>
+            <div class="stat-box">
+              <span class="s-label">已騎行距離</span>
+              <span id="finalDistVal" class="s-val">15.0m</span>
+            </div>
+          </div>
+
+          <div id="quoteBox" class="examiner-quote-box">
+            <span class="examiner-name">👮‍♂️ 監理站資深考官 講評：</span>
+            <span id="examinerComment">「少年仔，催這麼快是要去趕投胎喔？直線七秒不是直線加速賽！」</span>
+          </div>
+
+          <div class="modal-actions">
+            <button id="retryGameBtn" class="action-btn btn-primary" type="button">🔄 再考一次</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 底部多點觸控三鍵操控區：催油門（最左）、左微調（中間）、右微調（最右） -->
+    <footer class="controls-dock">
+      <button id="btnThrottle" class="ctrl-btn ctrl-throttle" type="button" aria-label="催油門">
+        <span class="ctrl-icon">🏍️</span>
+        <span class="ctrl-text">催油門</span>
+        <span class="ctrl-sub">長按加速 / W / ↑</span>
+      </button>
+
+      <button id="btnLeft" class="ctrl-btn ctrl-steer" type="button" aria-label="向左微調">
+        <span class="ctrl-icon">⬅️</span>
+        <span class="ctrl-text">左微調</span>
+        <span class="ctrl-sub">鍵盤 ← / A</span>
+      </button>
+
+      <button id="btnRight" class="ctrl-btn ctrl-steer" type="button" aria-label="向右微調">
+        <span class="ctrl-icon">➡️</span>
+        <span class="ctrl-text">右微調</span>
+        <span class="ctrl-sub">鍵盤 → / D</span>
+      </button>
+    </footer>
+  </div>
+
+  <script>
+    /**
+     * 台灣監理站：機車直線七秒模擬器
+     * 所有邏輯完整包裝在 DOMContentLoaded 內確保安全執行
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+      // ========================================================================
+      // 1. 取得所有 DOM 參考
+      // ========================================================================
+      const canvasStage = document.getElementById('canvasStage');
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d');
+
+      const timeDisplay = document.getElementById('timeDisplay');
+      const distDisplay = document.getElementById('distDisplay');
+      const speedDisplay = document.getElementById('speedDisplay');
+      const balanceStatus = document.getElementById('balanceStatus');
+      const balanceNeedle = document.getElementById('balanceNeedle');
+      const bubbleText = document.getElementById('bubbleText');
+
+      const startModal = document.getElementById('startModal');
+      const resultModal = document.getElementById('resultModal');
+      const resultBadge = document.getElementById('resultBadge');
+      const resultTitle = document.getElementById('resultTitle');
+      const finalTimeVal = document.getElementById('finalTimeVal');
+      const finalDistVal = document.getElementById('finalDistVal');
+      const quoteBox = document.getElementById('quoteBox');
+      const examinerComment = document.getElementById('examinerComment');
+
+      const startGameBtn = document.getElementById('startGameBtn');
+      const retryGameBtn = document.getElementById('retryGameBtn');
+      const audioToggleBtn = document.getElementById('audioToggleBtn');
+      const audioIcon = document.getElementById('audioIcon');
+      const audioLabel = document.getElementById('audioLabel');
+
+      const btnThrottle = document.getElementById('btnThrottle');
+      const btnLeft = document.getElementById('btnLeft');
+      const btnRight = document.getElementById('btnRight');
+
+      // ========================================================================
+      // 2. 台灣味監理站考官爆笑評語庫
+      // ========================================================================
+      const COMMENTS = {
+        TOO_FAST: [
+          '「少年仔，催這麼快是要去趕外送喔？直線七秒不是直線加速賽，下禮拜再來！」',
+          '「你以為你在騎重機跑麗寶賽道嗎？七秒都還沒數完就衝過頭，扣 32 分！」',
+          '「油門當水龍頭在轉喔？放輕鬆滑行啦，七天後再來找我報到！」'
+        ],
+        OUT_OF_BOUNDS: [
+          '「嗶——！輪胎壓到管線感應器了啦！你是把白線當作中線在騎嗎？」',
+          '「龍頭抓穩一點！左右晃得跟波浪舞一樣，還沒出考場就先壓線出局！」',
+          '「眼睛看前面遠方，不要一直盯著前輪看！壓線扣 32 分直接回家！」'
+        ],
+        STOPPED: [
+          '「喂！車子完全停下來了，腳是不是偷偷放下來撐地了？定桿特技去馬戲團表演啦！」',
+          '「太慢也是要會動啊！停在路中間吹風等紅燈喔？七天後再來！」',
+          '「油門完全不補就變靜止雕塑了啦，起步帶點速度再放開滑行才對！」'
+        ],
+        TIPPED_OVER: [
+          '「哎喲喂呀！車身歪成這樣還不微調拉正，直接表演側躺平躺喔？人沒事吧！」',
+          '「平衡感離家出走了嗎？車倒扣 32 分，旁邊先扶車休息一下！」',
+          '「龍頭左右輕點微調就好，不要一次扳死啦，直接華麗倒地！」'
+        ],
+        PASS_NORMAL: [
+          '「不錯喔！穩穩當當剛剛好過關，等一下去櫃檯繳規費領駕照，騎車要小心！」',
+          '「這節奏抓得很好！起步帶速、放油門微調，一看就是有偷練過的！」',
+          '「漂亮！安全通過直線七秒大魔王，後面的直角轉彎跟鐵路平交道也要穩住！」'
+        ],
+        PASS_MASTER: [
+          '「神乎其技！慢到我都以為時間靜止了，台灣機車定桿王就是你！」',
+          '「太誇張了這平衡感！你是從小騎單車走鋼索長大的嗎？直接發照！」'
+        ]
+      };
+
+      function pickRandom(list) {
+        return list[Math.floor(Math.random() * list.length)];
+      }
+
+      // ========================================================================
+      // 3. Web Audio 合成音效系統（無外部音檔依賴：考官哨音、引擎聲、過關音效）
+      // ========================================================================
+      class SoundEngine {
+        constructor() {
+          this.ctx = null;
+          this.muted = false;
+          this.engineOsc = null;
+          this.engineGain = null;
+        }
+
+        init() {
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) {
+              this.ctx = new AudioCtx();
+            }
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(() => {});
+          }
+        }
+
+        startEngine() {
+          if (this.muted || !this.ctx || this.engineOsc) return;
+          try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(58, this.ctx.currentTime);
+            gain.gain.setValueAtTime(0.025, this.ctx.currentTime);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+
+            this.engineOsc = osc;
+            this.engineGain = gain;
+          } catch (e) {}
+        }
+
+        updateEngine(speedRatio, isThrottling) {
+          if (this.muted || !this.ctx || !this.engineOsc || !this.engineGain) return;
+          try {
+            const now = this.ctx.currentTime;
+            const targetFreq = 52 + speedRatio * 75 + (isThrottling ? 24 : 0);
+            const targetVol = isThrottling ? 0.042 : 0.02;
+            this.engineOsc.frequency.setTargetAtTime(targetFreq, now, 0.06);
+            this.engineGain.gain.setTargetAtTime(targetVol, now, 0.06);
+          } catch (e) {}
+        }
+
+        stopEngine() {
+          if (this.engineOsc) {
+            try {
+              this.engineOsc.stop();
+              this.engineOsc.disconnect();
+            } catch (e) {}
+            this.engineOsc = null;
+          }
+          if (this.engineGain) {
+            try {
+              this.engineGain.disconnect();
+            } catch (e) {}
+            this.engineGain = null;
+          }
+        }
+
+        playWhistle() {
+          this.init();
+          if (this.muted || !this.ctx) return;
+          try {
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const lfo = this.ctx.createOscillator();
+            const lfoGain = this.ctx.createGain();
+            const mainGain = this.ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(2850, now);
+            osc.frequency.linearRampToValueAtTime(2720, now + 0.55);
+
+            lfo.type = 'sine';
+            lfo.frequency.setValueAtTime(34, now);
+            lfoGain.gain.setValueAtTime(95, now);
+
+            mainGain.gain.setValueAtTime(0.001, now);
+            mainGain.gain.linearRampToValueAtTime(0.16, now + 0.03);
+            mainGain.gain.setValueAtTime(0.15, now + 0.45);
+            mainGain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+
+            lfo.connect(lfoGain);
+            lfoGain.connect(osc.frequency);
+            osc.connect(mainGain);
+            mainGain.connect(this.ctx.destination);
+
+            osc.start(now);
+            lfo.start(now);
+            osc.stop(now + 0.66);
+            lfo.stop(now + 0.66);
+          } catch (e) {}
+        }
+
+        playPassFanfare() {
+          this.init();
+          if (this.muted || !this.ctx) return;
+          try {
+            const notes = [523.25, 659.25, 783.99, 1046.5];
+            notes.forEach((freq, idx) => {
+              const now = this.ctx.currentTime + idx * 0.1;
+              const osc = this.ctx.createOscillator();
+              const gain = this.ctx.createGain();
+              osc.type = 'triangle';
+              osc.frequency.setValueAtTime(freq, now);
+              gain.gain.setValueAtTime(0.001, now);
+              gain.gain.linearRampToValueAtTime(0.12, now + 0.02);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+              osc.connect(gain);
+              gain.connect(this.ctx.destination);
+              osc.start(now);
+              osc.stop(now + 0.3);
+            });
+          } catch (e) {}
+        }
+      }
+
+      const sound = new SoundEngine();
+
+      // ========================================================================
+      // 4. 遊戲物理參數與狀態機（難度調整為適中平衡的中間值：既有挑戰又易掌握節奏）
+      // ========================================================================
+      const TRACK_LENGTH_M = 15.0;      // 跑道總長 15.0 公尺
+      const LANE_HALF_WIDTH_M = 0.47;   // 適中車道半寬（總寬 0.94m）
+      const TIRE_HALF_WIDTH_M = 0.055;  // 輪胎半寬
+      const MAX_TILT = 1.0;             // 傾斜極限 (-1.0 左倒 ~ +1.0 右倒)
+      const PASS_MIN_TIME = 7.0;        // 過關最低秒數 7.00s
+
+      const state = {
+        phase: 'INTRO',
+        elapsedTime: 0,
+        distance: 0,
+        speed: 0,
+        lateralPos: 0,
+        tilt: 0,
+        tiltVel: 0,
+        steerAngle: 0,
+        wobblePhase: Math.random() * Math.PI * 2,
+        driftPhase: Math.random() * Math.PI * 2,
+        gustTimer: 0,
+        gustForce: 0,
+        wheelSpin: 0
+      };
+
+      const input = {
+        left: false,
+        right: false,
+        throttle: false
+      };
+
+      // ========================================================================
+      // 5. Canvas 自適應尺寸調整 (支援高 DPI 螢幕)
+      // ========================================================================
+      let viewWidth = 400;
+      let viewHeight = 500;
+
+      function resizeCanvas() {
+        const rect = canvasStage.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        viewWidth = rect.width;
+        viewHeight = rect.height;
+        canvas.width = Math.floor(viewWidth * dpr);
+        canvas.height = Math.floor(viewHeight * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        render();
+      }
+
+      window.addEventListener('resize', resizeCanvas);
+
+      // ========================================================================
+      // 6. 遊戲初始化與流程控制
+      // ========================================================================
+      function resetGame(autoReady = true) {
+        sound.stopEngine();
+        state.phase = autoReady ? 'READY' : 'INTRO';
+        state.elapsedTime = 0;
+        state.distance = 0;
+        state.speed = 0;
+        state.lateralPos = 0;
+        state.tilt = 0;
+        state.tiltVel = 0;
+        state.steerAngle = 0;
+        state.wobblePhase = Math.random() * Math.PI * 2;
+        state.driftPhase = Math.random() * Math.PI * 2;
+        state.gustTimer = 0.85;
+        state.gustForce = 0;
+        state.wheelSpin = 0;
+
+        input.left = false;
+        input.right = false;
+        input.throttle = false;
+        updateControlVisuals();
+
+        resultModal.classList.add('hidden');
+        bubbleText.textContent = '按住左下「催油門」起步！過線開始計時！';
+        updateHUD();
+        render();
+      }
+
+      function beginExam() {
+        sound.init();
+        startModal.classList.add('hidden');
+        resetGame(true);
+      }
+
+      function finishExam(isPass, reasonTitle, commentText) {
+        if (state.phase === 'ENDED') return;
+        state.phase = 'ENDED';
+        sound.stopEngine();
+
+        if (isPass) {
+          sound.playPassFanfare();
+          resultBadge.textContent = '🎉 路考及格・准予核發駕照';
+          resultBadge.className = 'modal-badge pass';
+          quoteBox.className = 'examiner-quote-box pass-quote';
+          bubbleText.textContent = '漂亮過關！記得去櫃檯領駕照！';
+        } else {
+          sound.playWhistle();
+          resultBadge.textContent = '🚨 考驗失敗・扣 32 分';
+          resultBadge.className = 'modal-badge fail';
+          quoteBox.className = 'examiner-quote-box';
+          bubbleText.textContent = '嗶——！考驗失敗，請回起點！';
+        }
+
+        const timeStr = `${state.elapsedTime.toFixed(2)}s`;
+        const distStr = `${Math.min(state.distance, TRACK_LENGTH_M).toFixed(1)}m`;
+
+        resultTitle.textContent = reasonTitle;
+        finalTimeVal.textContent = timeStr;
+        finalDistVal.textContent = distStr;
+        examinerComment.textContent = commentText;
+
+        resultModal.classList.remove('hidden');
+      }
+
+      // ========================================================================
+      // 7. 核心物理模擬更新（中間值難度：手感溫潤可控、輕點微調即可穩住回正）
+      // ========================================================================
+      function updatePhysics(dt) {
+        if (state.phase === 'READY') {
+          if (input.throttle) {
+            state.phase = 'RUNNING';
+            state.speed = 1.45;
+            // 溫和的起步微偏角，不突然暴衝
+            state.tiltVel = (Math.random() > 0.5 ? 1 : -1) * 0.14;
+            sound.startEngine();
+            bubbleText.textContent = '計時開始！輕點左右微調龍頭保持平衡！';
+          } else {
+            return;
+          }
+        }
+
+        if (state.phase !== 'RUNNING') return;
+
+        // 1) 時間推進
+        state.elapsedTime += dt;
+
+        // 2) 縱向速度與油門物理
+        const accel = 2.65;
+        const drag = 0.85;
+        const maxSpeed = 5.4;
+
+        if (input.throttle) {
+          state.speed = Math.min(maxSpeed, state.speed + accel * dt);
+        } else {
+          state.speed = Math.max(0, state.speed - drag * dt);
+        }
+
+        // 檢查是否完全停住（腳著地失敗）
+        if (state.elapsedTime > 0.25 && state.speed <= 0.04) {
+          state.speed = 0;
+          finishExam(
+            false,
+            '速度歸零！腳著地扣 32 分！',
+            pickRandom(COMMENTS.STOPPED)
+          );
+          return;
+        }
+
+        // 3) 中間值難度：速度越慢有適度低速晃動，但幅度和緩、不會無故暴飄
+        const slowFactor = Math.max(0.25, Math.min(1.85, (3.2 - state.speed) / 1.55));
+        state.wobblePhase += dt * (2.5 + slowFactor * 1.25);
+        state.driftPhase += dt * 1.1;
+
+        // 溫和的微風擾動（約為前版的 55%）
+        state.gustTimer -= dt;
+        if (state.gustTimer <= 0) {
+          state.gustTimer = 0.85 + Math.random() * 0.95;
+          state.gustForce = (Math.random() * 2 - 1) * 0.45 * slowFactor;
+        }
+
+        const ambientTorque =
+          (Math.sin(state.wobblePhase) * 0.55 +
+            Math.sin(state.wobblePhase * 2.15) * 0.28) *
+            slowFactor *
+            0.82 +
+          state.gustForce;
+
+        // 4) 玩家左右微調龍頭操作（增強回正阻尼，點按反應跟手不飄移）
+        let steerInput = 0;
+        if (input.left) steerInput -= 1;
+        if (input.right) steerInput += 1;
+
+        state.steerAngle += (steerInput * 0.42 - state.steerAngle) * Math.min(1, dt * 16);
+
+        const playerTorque = steerInput * 2.45;
+        const gravityPull = state.tilt * (0.98 + slowFactor * 0.46);
+        const damping = -state.tiltVel * (2.35 + (input.throttle ? 0.5 : 0));
+
+        const angularAccel = ambientTorque + playerTorque + gravityPull + damping;
+        state.tiltVel += angularAccel * dt;
+        state.tilt += state.tiltVel * dt;
+
+        // 5) 適中側向滑移係數（讓玩家有充足時間修正車道偏移）
+        const microDrift = Math.sin(state.driftPhase) * 0.035 * slowFactor;
+        const lateralVel =
+          (state.tilt * 0.68 + steerInput * 0.22) * Math.max(0.7, state.speed * 0.56) + microDrift;
+        state.lateralPos += lateralVel * dt;
+
+        // 6) 前進距離與輪胎轉動
+        state.distance += state.speed * dt;
+        state.wheelSpin += state.speed * dt * 8;
+
+        sound.updateEngine(state.speed / maxSpeed, input.throttle);
+
+        // 場邊考官動態語音提示
+        if (state.elapsedTime >= PASS_MIN_TIME && state.distance < TRACK_LENGTH_M) {
+          bubbleText.textContent = '滿 7 秒了！穩住龍頭直接通過終點線！';
+        } else if (Math.abs(state.tilt) > 0.64) {
+          bubbleText.textContent = '車身稍微傾斜囉，輕點反向微調拉正！';
+        } else if (state.speed < 1.1) {
+          bubbleText.textContent = '快停下來了！輕補一下油門維持滑行！';
+        }
+
+        // 7) 判定勝負條件
+        if (Math.abs(state.tilt) >= MAX_TILT) {
+          state.tilt = Math.sign(state.tilt) * MAX_TILT;
+          finishExam(
+            false,
+            '失去平衡倒車！考驗失敗！',
+            pickRandom(COMMENTS.TIPPED_OVER)
+          );
+          return;
+        }
+
+        if (Math.abs(state.lateralPos) + TIRE_HALF_WIDTH_M >= LANE_HALF_WIDTH_M) {
+          finishExam(
+            false,
+            '嗶——！輪胎壓白線出界！',
+            pickRandom(COMMENTS.OUT_OF_BOUNDS)
+          );
+          return;
+        }
+
+        if (state.distance >= TRACK_LENGTH_M) {
+          state.distance = TRACK_LENGTH_M;
+          if (state.elapsedTime < PASS_MIN_TIME) {
+            finishExam(
+              false,
+              `僅耗時 ${state.elapsedTime.toFixed(2)}s！未滿 7 秒失敗！`,
+              pickRandom(COMMENTS.TOO_FAST)
+            );
+          } else {
+            const commentPool =
+              state.elapsedTime >= 9.0 ? COMMENTS.PASS_MASTER : COMMENTS.PASS_NORMAL;
+            finishExam(
+              true,
+              `恭喜過關！耗時 ${state.elapsedTime.toFixed(2)} 秒！`,
+              pickRandom(commentPool)
+            );
+          }
+        }
+      }
+
+      // ========================================================================
+      // 8. HUD 與莫蘭迪平衡儀表條即時更新
+      // ========================================================================
+      function updateHUD() {
+        timeDisplay.textContent = state.elapsedTime.toFixed(2);
+        if (state.elapsedTime >= PASS_MIN_TIME) {
+          timeDisplay.classList.add('ready-green');
+        } else {
+          timeDisplay.classList.remove('ready-green');
+        }
+
+        const remain = Math.max(0, TRACK_LENGTH_M - state.distance);
+        distDisplay.textContent = remain.toFixed(1);
+
+        const kmh = state.speed * 3.6;
+        speedDisplay.textContent = kmh.toFixed(1);
+
+        const clampedTilt = Math.max(-1, Math.min(1, state.tilt));
+        const percent = 50 + clampedTilt * 46;
+        balanceNeedle.style.left = `${percent}%`;
+
+        const absTilt = Math.abs(clampedTilt);
+        if (state.phase === 'READY') {
+          balanceStatus.textContent = '車身回正・準備出發';
+          balanceStatus.className = 'balance-status-text';
+          balanceStatus.style.color = '#6b8b6e';
+          balanceNeedle.style.backgroundColor = '#fbf9f6';
+        } else if (absTilt >= 0.65) {
+          balanceStatus.textContent = clampedTilt < 0 ? '⚠️ 嚴重左傾！快按右！' : '⚠️ 嚴重右傾！快按左！';
+          balanceStatus.className = 'balance-status-text danger';
+          balanceNeedle.style.backgroundColor = '#d49a89';
+        } else if (absTilt >= 0.34) {
+          balanceStatus.textContent = clampedTilt < 0 ? '⚡ 略偏左側・微調回正' : '⚡ 略偏右側・微調回正';
+          balanceStatus.className = 'balance-status-text';
+          balanceStatus.style.color = '#b8844c';
+          balanceNeedle.style.backgroundColor = '#dfc38c';
+        } else {
+          balanceStatus.textContent = '✅ 平衡極佳・穩住前進';
+          balanceStatus.className = 'balance-status-text';
+          balanceStatus.style.color = '#6b8b6e';
+          balanceNeedle.style.backgroundColor = '#9caf9e';
+        }
+      }
+
+      // ========================================================================
+      // 9. 莫蘭迪柔霧插畫風 2.5D 監理站考場與日系文青騎士繪製
+      // ========================================================================
+      function render() {
+        const w = viewWidth;
+        const h = viewHeight;
+        ctx.clearRect(0, 0, w, h);
+
+        const horizonY = h * 0.16;
+        const bikeScreenY = h * 0.77;
+        const centerX = w * 0.5;
+
+        // 1) 莫蘭迪霧藍漸層天空與奶油白軟雲
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
+        skyGrad.addColorStop(0, '#a8bac4');
+        skyGrad.addColorStop(1, '#dce3e6');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, w, horizonY);
+
+        drawCuteCloud(w * 0.16, horizonY * 0.34, 0.75);
+        drawCuteCloud(w * 0.82, horizonY * 0.28, 0.85);
+
+        // 2) 莫蘭迪鼠尾草灰綠草地緩衝區
+        const grassGrad = ctx.createLinearGradient(0, horizonY, 0, h);
+        grassGrad.addColorStop(0, '#c8d3c5');
+        grassGrad.addColorStop(1, '#b3c2b0');
+        ctx.fillStyle = grassGrad;
+        ctx.fillRect(0, horizonY, w, h - horizonY);
+
+        // 柔和草叢圓點裝飾
+        ctx.fillStyle = '#9eb09b';
+        for (let i = 0; i < 12; i++) {
+          const gx = ((i * 97) % Math.max(1, Math.floor(w)));
+          const gy = horizonY + 25 + ((i * 61) % Math.max(1, Math.floor(h - horizonY - 40)));
+          ctx.beginPath();
+          ctx.arc(gx, gy, 3.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // 監理站鼠尾草綠與燕麥金遮雨棚橫幅
+        ctx.fillStyle = '#7e9380';
+        ctx.fillRect(0, horizonY - 24, w, 24);
+        ctx.fillStyle = '#dfc38c';
+        ctx.fillRect(0, horizonY - 3, w, 3);
+        ctx.fillStyle = '#fbf9f6';
+        ctx.font = '900 11.5px "Noto Sans TC", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('☁️ 公路局機車考驗場・管線感應區請勿壓線 ☁️', centerX, horizonY - 8);
+
+        // 3) 2.5D 透視莫蘭迪暖炭灰柏油路面
+        const laneHalfPxNear = Math.min(w * 0.31, 145);
+        const metersToPxNear = 58;
+
+        function projectTrackY(worldDist) {
+          const relDist = worldDist - state.distance;
+          return bikeScreenY - relDist * metersToPxNear;
+        }
+
+        function getScaleAtY(screenY) {
+          const t = Math.max(0, Math.min(1, (screenY - horizonY) / (bikeScreenY - horizonY)));
+          return 0.42 + t * 0.58;
+        }
+
+        const roadBottomY = h;
+        const scaleBottom = getScaleAtY(roadBottomY);
+        const scaleTop = getScaleAtY(horizonY);
+
+        const roadHalfNear = laneHalfPxNear * 1.48 * scaleBottom;
+        const roadHalfFar = laneHalfPxNear * 1.48 * scaleTop;
+
+        // 莫蘭迪暖炭灰柏油路面 (#6E6D6B)
+        ctx.beginPath();
+        ctx.moveTo(centerX - roadHalfFar, horizonY);
+        ctx.lineTo(centerX + roadHalfFar, horizonY);
+        ctx.lineTo(centerX + roadHalfNear, roadBottomY);
+        ctx.lineTo(centerX - roadHalfNear, roadBottomY);
+        ctx.closePath();
+        ctx.fillStyle = '#6e6d6b';
+        ctx.fill();
+
+        // 路面兩側燕麥灰路緣線
+        ctx.strokeStyle = '#d6cfc7';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(centerX - roadHalfFar, horizonY);
+        ctx.lineTo(centerX - roadHalfNear, roadBottomY);
+        ctx.moveTo(centerX + roadHalfFar, horizonY);
+        ctx.lineTo(centerX + roadHalfNear, roadBottomY);
+        ctx.stroke();
+
+        // 距離標記線與莫蘭迪陶土暖橘三角錐
+        const firstMark = Math.floor(state.distance - 3);
+        const lastMark = Math.ceil(state.distance + 18);
+
+        for (let m = firstMark; m <= lastMark; m += 1) {
+          const sy = projectTrackY(m);
+          if (sy < horizonY || sy > roadBottomY) continue;
+          const sc = getScaleAtY(sy);
+          const halfW = laneHalfPxNear * sc;
+
+          if (m >= 0 && m <= TRACK_LENGTH_M && m % 3 === 0) {
+            drawTrafficCone(centerX - halfW * 1.28, sy, sc);
+            drawTrafficCone(centerX + halfW * 1.28, sy, sc);
+          }
+
+          if (m === 0 || m === 5 || m === 10 || m === 15) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(centerX - halfW, sy);
+            ctx.lineTo(centerX + halfW, sy);
+            if (m === 15) {
+              ctx.strokeStyle = state.elapsedTime >= PASS_MIN_TIME ? '#9caf9e' : '#dfc38c';
+              ctx.lineWidth = Math.max(5, 10 * sc);
+            } else if (m === 0) {
+              ctx.strokeStyle = '#95a7b3';
+              ctx.lineWidth = Math.max(3, 6 * sc);
+            } else {
+              ctx.strokeStyle = 'rgba(247, 243, 238, 0.38)';
+              ctx.lineWidth = Math.max(2, 3 * sc);
+              ctx.setLineDash([8 * sc, 6 * sc]);
+            }
+            ctx.stroke();
+
+            ctx.fillStyle = m === 15 ? '#f2dfba' : '#f4efea';
+            ctx.font = `900 ${Math.max(10, Math.round(14 * sc))}px Orbitron, "Noto Sans TC", sans-serif`;
+            ctx.textAlign = 'left';
+            const label = m === 0 ? 'START 0m' : m === 15 ? 'FINISH 15m' : `${m}m`;
+            ctx.fillText(label, centerX + halfW + 8 * sc, sy + 4 * sc);
+            ctx.restore();
+          }
+        }
+
+        // 4) 兩側奶油米白管線感應白線 (#F7F3EE) 與中心輔助虛線
+        const laneNear = laneHalfPxNear * scaleBottom;
+        const laneFar = laneHalfPxNear * scaleTop;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(centerX, horizonY);
+        ctx.lineTo(centerX, roadBottomY);
+        ctx.strokeStyle = 'rgba(223, 195, 140, 0.38)';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([12, 12]);
+        ctx.stroke();
+        ctx.restore();
+
+        const nearEdgeRatio = Math.abs(state.lateralPos) / LANE_HALF_WIDTH_M;
+        const lineWarning = nearEdgeRatio > 0.72;
+
+        ctx.save();
+        ctx.lineWidth = 6.5;
+        ctx.strokeStyle = lineWarning ? '#d49a89' : '#f7f3ee';
+        if (lineWarning) {
+          ctx.shadowColor = '#c98a7b';
+          ctx.shadowBlur = 14;
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(centerX - laneFar, horizonY);
+        ctx.lineTo(centerX - laneNear, roadBottomY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(centerX + laneFar, horizonY);
+        ctx.lineTo(centerX + laneNear, roadBottomY);
+        ctx.stroke();
+        ctx.restore();
+
+        // 5) 日系插畫風監理站考官
+        const finishY = projectTrackY(TRACK_LENGTH_M);
+        if (finishY >= horizonY - 10 && finishY <= roadBottomY + 40) {
+          const fScale = getScaleAtY(finishY);
+          const fHalfW = laneHalfPxNear * fScale;
+          drawExaminerCharacter(centerX - fHalfW * 1.45, finishY, fScale);
+        }
+
+        // 6) 日系文青插畫風：復古美型速克達與連帽外套騎士
+        const bikeScale = getScaleAtY(bikeScreenY);
+        const bikeLaneHalfPx = laneHalfPxNear * bikeScale;
+        const bikeOffsetX = (state.lateralPos / LANE_HALF_WIDTH_M) * bikeLaneHalfPx;
+        drawScooterAndRider(centerX + bikeOffsetX, bikeScreenY, bikeScale);
+      }
+
+      // 繪製莫蘭迪奶油白軟雲
+      function drawCuteCloud(x, y, scale) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.fillStyle = 'rgba(250, 247, 242, 0.86)';
+        ctx.beginPath();
+        ctx.arc(0, 0, 18, 0, Math.PI * 2);
+        ctx.arc(16, -4, 15, 0, Math.PI * 2);
+        ctx.arc(32, 2, 13, 0, Math.PI * 2);
+        ctx.arc(-15, 3, 13, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // 繪製莫蘭迪陶土暖橘三角錐 (#D18770)
+      function drawTrafficCone(x, y, scale) {
+        const w = 16 * scale;
+        const h = 22 * scale;
+        ctx.save();
+        ctx.fillStyle = '#4e4b47';
+        ctx.fillRect(x - w * 0.65, y - 3 * scale, w * 1.3, 4 * scale);
+        ctx.beginPath();
+        ctx.moveTo(x, y - h);
+        ctx.lineTo(x + w * 0.5, y - 2 * scale);
+        ctx.lineTo(x - w * 0.5, y - 2 * scale);
+        ctx.closePath();
+        ctx.fillStyle = '#d18770';
+        ctx.fill();
+        ctx.fillStyle = '#f7f3ee';
+        ctx.fillRect(x - w * 0.28, y - h * 0.55, w * 0.56, h * 0.2);
+        ctx.restore();
+      }
+
+      // 繪製溫和可愛的日系插畫風監理站考官
+      function drawExaminerCharacter(x, y, scale) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+
+        // 柔和地面陰影
+        ctx.fillStyle = 'rgba(74, 70, 66, 0.22)';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 15, 5.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 莫蘭迪深灰藍直筒長褲與休閒鞋
+        ctx.fillStyle = '#5c6b75';
+        ctx.beginPath();
+        ctx.roundRect(-8.5, -24, 7.5, 21, 3.5);
+        ctx.roundRect(1, -24, 7.5, 21, 3.5);
+        ctx.fill();
+        ctx.fillStyle = '#f4efea';
+        ctx.beginPath();
+        ctx.roundRect(-9.5, -5, 9, 4.5, 2);
+        ctx.roundRect(0.5, -5, 9, 4.5, 2);
+        ctx.fill();
+
+        // 莫蘭迪霧藍襯衫與芥末暖黃反光背心
+        ctx.fillStyle = '#8fa3b0';
+        ctx.beginPath();
+        ctx.roundRect(-12, -47, 24, 24, 7);
+        ctx.fill();
+        ctx.fillStyle = '#dfc38c';
+        ctx.beginPath();
+        ctx.roundRect(-9, -46, 18, 21, 4);
+        ctx.fill();
+        // 反光條細節
+        ctx.fillStyle = '#f7f3ee';
+        ctx.fillRect(-9, -35, 18, 2.5);
+
+        // 溫和圓潤臉龐與耳朵
+        ctx.fillStyle = '#efd2bc';
+        ctx.beginPath();
+        ctx.arc(0, -56, 9.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 考官鴨舌帽
+        ctx.fillStyle = '#5c6b75';
+        ctx.beginPath();
+        ctx.arc(0, -58, 9.5, Math.PI, 0);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.roundRect(-11, -60, 22, 4.5, 2.5);
+        ctx.fill();
+        ctx.fillStyle = '#dfc38c';
+        ctx.fillRect(-3.5, -63, 7, 2.5);
+
+        // 手持碼錶與掛哨
+        ctx.strokeStyle = '#78726b';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(-4, -46);
+        ctx.lineTo(0, -39);
+        ctx.lineTo(4, -46);
+        ctx.stroke();
+
+        ctx.fillStyle = '#4a4642';
+        ctx.beginPath();
+        ctx.arc(14, -38, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#f7f3ee';
+        ctx.beginPath();
+        ctx.arc(14, -38, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      // ========================================================================
+      // 10. 日系文青插畫風：復古美型速克達 ＋ 連帽外套騎士（追尾 2.5D 視角）
+      // ========================================================================
+      function drawScooterAndRider(x, y, scale) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+
+        // 1) 柔和貼地橢圓陰影（垂直貼地，精準對齊白線感應位置）
+        ctx.fillStyle = 'rgba(65, 60, 55, 0.28)';
+        ctx.beginPath();
+        ctx.ellipse(0, 7, 23, 8.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 後輪胎與復古銀灰擋泥板細節
+        ctx.fillStyle = '#3f3d3b';
+        ctx.beginPath();
+        ctx.roundRect(-8.5, -15, 17, 24, 7.5);
+        ctx.fill();
+        // 胎紋動態
+        ctx.strokeStyle = '#686460';
+        ctx.lineWidth = 1.8;
+        const treadOffset = (state.wheelSpin % 8) - 4;
+        ctx.beginPath();
+        ctx.moveTo(-4.5, -3 + treadOffset);
+        ctx.lineTo(4.5, -3 + treadOffset);
+        ctx.stroke();
+
+        // 右側精緻復古鍍鉻排氣管
+        ctx.fillStyle = '#9d9892';
+        ctx.beginPath();
+        ctx.roundRect(13, -24, 6.5, 22, 3.2);
+        ctx.fill();
+        ctx.fillStyle = '#d8d2ca';
+        ctx.beginPath();
+        ctx.roundRect(14.5, -21, 2.5, 16, 1.5);
+        ctx.fill();
+
+        // 2) 車身與騎士隨傾角 tilt 優雅擺動
+        const tiltRad = state.tilt * 0.44;
+        ctx.rotate(tiltRad);
+
+        // --- 復古美型速克達（類似 Vespa / Gogoro 圓潤雙色流線車殼） ---
+        // 下層莫蘭迪鼠尾草綠圓潤車殼底座
+        ctx.fillStyle = '#8fa491';
+        ctx.beginPath();
+        ctx.moveTo(-18, -24);
+        ctx.quadraticCurveTo(-27, -38, -21, -55);
+        ctx.lineTo(21, -55);
+        ctx.quadraticCurveTo(27, -38, 18, -24);
+        ctx.closePath();
+        ctx.fill();
+
+        // 上層莫蘭迪奶茶白圓潤車殼高光層
+        ctx.fillStyle = '#f4ede4';
+        ctx.beginPath();
+        ctx.moveTo(-16, -28);
+        ctx.quadraticCurveTo(-24, -40, -19, -54);
+        ctx.lineTo(19, -54);
+        ctx.quadraticCurveTo(24, -40, 16, -28);
+        ctx.closePath();
+        ctx.fill();
+
+        // 車殼邊緣細緻描邊，提升日系繪本質感
+        ctx.strokeStyle = '#756f68';
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+
+        // 後座小巧霧銀金屬貨架
+        ctx.strokeStyle = '#a8a29c';
+        ctx.lineWidth = 2.6;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.roundRect(-12, -57, 24, 7, 3.5);
+        ctx.stroke();
+
+        // 後土除與奶油白車牌
+        ctx.fillStyle = '#585450';
+        ctx.beginPath();
+        ctx.roundRect(-14, -27, 28, 16, 5);
+        ctx.fill();
+
+        ctx.fillStyle = '#fbf9f6';
+        ctx.fillRect(-12, -23.5, 24, 11.5);
+        ctx.strokeStyle = '#68635e';
+        ctx.lineWidth = 1.1;
+        ctx.strokeRect(-12, -23.5, 24, 11.5);
+        ctx.fillStyle = '#4a4642';
+        ctx.font = 'bold 7px Orbitron, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('TW-777', 0, -15.5);
+
+        // 細膩雙層復古圓角尾燈（放開油門煞車時亮柔和暖紅光）
+        const brakeActive = !input.throttle && state.phase === 'RUNNING';
+        ctx.fillStyle = brakeActive ? '#d96b5c' : '#b8766a';
+        if (brakeActive) {
+          ctx.shadowColor = '#d48275';
+          ctx.shadowBlur = 14;
+        }
+        ctx.beginPath();
+        ctx.roundRect(-11, -46, 22, 7.5, 3.8);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        // 尾燈內層亮光高光
+        ctx.fillStyle = brakeActive ? '#f7cfc8' : '#dca99f';
+        ctx.beginPath();
+        ctx.roundRect(-8, -44.2, 16, 3.2, 1.8);
+        ctx.fill();
+
+        // 左右復古水滴方向燈
+        ctx.fillStyle = input.left ? '#e6ba6a' : '#cfa86e';
+        ctx.beginPath();
+        ctx.ellipse(-16.5, -42.5, 3.5, 2.5, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = input.right ? '#e6ba6a' : '#cfa86e';
+        ctx.beginPath();
+        ctx.ellipse(16.5, -42.5, 3.5, 2.5, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // --- 騎士下半身：寬鬆直筒卡其褲 ＋ 復古奶油休閒鞋 ---
+        // 左卡其褲管
+        ctx.fillStyle = '#cbb799';
+        ctx.strokeStyle = '#756f68';
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.roundRect(-25, -53, 9.5, 22, 4.5);
+        ctx.fill();
+        ctx.stroke();
+
+        // 右卡其褲管
+        ctx.beginPath();
+        ctx.roundRect(15.5, -53, 9.5, 22, 4.5);
+        ctx.fill();
+        ctx.stroke();
+
+        // 左右復古休閒鞋（鞋底＋奶油鞋身）
+        ctx.fillStyle = '#f7f3ee';
+        ctx.beginPath();
+        ctx.roundRect(-27, -33, 11.5, 6.5, 3.2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#9c7a63';
+        ctx.fillRect(-26.5, -28.2, 10.5, 1.8);
+
+        ctx.fillStyle = '#f7f3ee';
+        ctx.beginPath();
+        ctx.roundRect(15.5, -33, 11.5, 6.5, 3.2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#9c7a63';
+        ctx.fillRect(16, -28.2, 10.5, 1.8);
+
+        // --- 龍頭把手、煞車拉桿與圓潤復古雙圓後照鏡 ---
+        ctx.save();
+        ctx.translate(0, -70);
+        ctx.rotate(state.steerAngle * 0.42);
+
+        // 奶茶白車頭龍頭罩
+        ctx.fillStyle = '#f4ede4';
+        ctx.strokeStyle = '#756f68';
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.roundRect(-14, -5, 28, 10, 5);
+        ctx.fill();
+        ctx.stroke();
+
+        // 手把橫桿與焦糖棕復古握把
+        ctx.strokeStyle = '#6d6761';
+        ctx.lineWidth = 4.5;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(-30, 0);
+        ctx.lineTo(30, 0);
+        ctx.stroke();
+
+        // 煞車拉桿細線
+        ctx.strokeStyle = '#9d9892';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(-22, -2.5);
+        ctx.lineTo(-31, -4.5);
+        ctx.moveTo(22, -2.5);
+        ctx.lineTo(31, -4.5);
+        ctx.stroke();
+
+        // 焦糖棕握把套
+        ctx.fillStyle = '#9e765c';
+        ctx.beginPath();
+        ctx.roundRect(-32, -3, 8.5, 6, 3);
+        ctx.roundRect(23.5, -3, 8.5, 6, 3);
+        ctx.fill();
+
+        // 復古雙圓鍍鉻後照鏡（鏡柄＋正圓鏡框）
+        ctx.strokeStyle = '#8c8680';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-22, -3);
+        ctx.lineTo(-31, -12);
+        ctx.moveTo(22, -3);
+        ctx.lineTo(31, -12);
+        ctx.stroke();
+
+        ctx.fillStyle = '#dce4e8';
+        ctx.strokeStyle = '#756f68';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.arc(-32, -13, 6.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(32, -13, 6.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // 雙手自然握住手把（連帽外套寬鬆袖口＋小手）
+        ctx.strokeStyle = '#8fa3b0';
+        ctx.lineWidth = 8.2;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(-16, 3);
+        ctx.quadraticCurveTo(-24, 3, -27, 0);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(16, 3);
+        ctx.quadraticCurveTo(24, 3, 27, 0);
+        ctx.stroke();
+
+        // 雙手與袖口白邊
+        ctx.fillStyle = '#efd2bc';
+        ctx.beginPath();
+        ctx.arc(-27.5, 0, 3.8, 0, Math.PI * 2);
+        ctx.arc(27.5, 0, 3.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // --- 騎士上半身：日系寬鬆落肩莫蘭迪霧藍連帽外套 ＋ 焦糖棕小郵差包 ---
+        // 身體微幅隨重心偏移，呈現自然騎乘感
+        const bodySwayX = state.tilt * 2.5;
+        ctx.save();
+        ctx.translate(bodySwayX, 0);
+
+        // 霧藍連帽外套主體（比例協調不臃腫）
+        ctx.fillStyle = '#8fa3b0';
+        ctx.strokeStyle = '#68635e';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.roundRect(-18, -76, 36, 30, 12);
+        ctx.fill();
+        ctx.stroke();
+
+        // 外套肩背柔和立體光影
+        ctx.fillStyle = '#a2b4c0';
+        ctx.beginPath();
+        ctx.roundRect(-15.5, -74.5, 31, 13, 9);
+        ctx.fill();
+
+        // 連帽外套垂墜帽兜褶皺細節
+        ctx.fillStyle = '#7d92a0';
+        ctx.strokeStyle = '#68635e';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.roundRect(-11, -78, 22, 11, 5.5);
+        ctx.fill();
+        ctx.stroke();
+
+        // 斜背焦糖棕帆布小郵差包（背帶＋方圓包身＋銅扣）
+        ctx.strokeStyle = '#9e765c';
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.moveTo(-13, -74);
+        ctx.lineTo(13, -50);
+        ctx.stroke();
+
+        ctx.fillStyle = '#b6896c';
+        ctx.strokeStyle = '#68635e';
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.roundRect(1, -63, 15, 13, 4);
+        ctx.fill();
+        ctx.stroke();
+        // 郵差包翻蓋與小銅扣
+        ctx.fillStyle = '#a17558';
+        ctx.beginPath();
+        ctx.roundRect(1, -63, 15, 6, 3.5);
+        ctx.fill();
+        ctx.fillStyle = '#e6c88a';
+        ctx.beginPath();
+        ctx.arc(8.5, -57, 1.6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // --- 日系插畫風頭部：露出小耳朵、柔順暖棕髮絲與奶油色復古半罩安全帽 ---
+        // 左右小耳朵
+        ctx.fillStyle = '#efd2bc';
+        ctx.strokeStyle = '#68635e';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(-13.5, -86, 3, 0, Math.PI * 2);
+        ctx.arc(13.5, -86, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // 後頸柔順深栗棕髮絲
+        ctx.fillStyle = '#6a5548';
+        ctx.beginPath();
+        ctx.roundRect(-12, -88, 24, 11, 5.5);
+        ctx.fill();
+
+        // 奶油燕麥色復古半罩式安全帽（比例協調：半徑 14.5）
+        ctx.fillStyle = '#f5eee4';
+        ctx.strokeStyle = '#68635e';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(0, -91, 14.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // 安全帽溫柔高光弧線
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.72)';
+        ctx.beginPath();
+        ctx.ellipse(-4.5, -98, 5, 2.4, -0.42, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 復古鼠尾草綠中央飾條與茶色護目鏡緣邊
+        ctx.fillStyle = '#8fa491';
+        ctx.fillRect(-2.2, -105.2, 4.4, 28.4);
+
+        // 安全帽下緣焦糖棕皮革滾邊與反光小貼紙
+        ctx.strokeStyle = '#9e765c';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, -91, 14.2, 0.25 * Math.PI, 0.75 * Math.PI);
+        ctx.stroke();
+
+        ctx.fillStyle = '#d49a89';
+        ctx.beginPath();
+        ctx.roundRect(-6, -84, 12, 3.5, 1.8);
+        ctx.fill();
+
+        ctx.restore();
+        ctx.restore();
+      }
+
+      // ========================================================================
+      // 11. 主動畫迴圈 (requestAnimationFrame)
+      // ========================================================================
+      let lastTimestamp = 0;
+
+      function gameLoop(timestamp) {
+        if (!lastTimestamp) lastTimestamp = timestamp;
+        const rawDt = (timestamp - lastTimestamp) / 1000;
+        lastTimestamp = timestamp;
+        const dt = Math.min(rawDt, 0.05);
+
+        updatePhysics(dt);
+        updateHUD();
+        render();
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      // ========================================================================
+      // 12. 多點觸控 (Multi-touch) 與鍵盤事件綁定
+      // ========================================================================
+      function updateControlVisuals() {
+        btnLeft.classList.toggle('active', input.left);
+        btnRight.classList.toggle('active', input.right);
+        btnThrottle.classList.toggle('active', input.throttle);
+      }
+
+      function bindMultiTouchButton(element, keyName) {
+        const activeTouches = new Set();
+
+        const setPressed = (pressed) => {
+          input[keyName] = pressed;
+          updateControlVisuals();
+        };
+
+        element.addEventListener(
+          'touchstart',
+          (e) => {
+            e.preventDefault();
+            sound.init();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+              activeTouches.add(e.changedTouches[i].identifier);
+            }
+            setPressed(true);
+          },
+          { passive: false }
+        );
+
+        const handleTouchRelease = (e) => {
+          e.preventDefault();
+          for (let i = 0; i < e.changedTouches.length; i++) {
+            activeTouches.delete(e.changedTouches[i].identifier);
+          }
+          if (activeTouches.size === 0) {
+            setPressed(false);
+          }
+        };
+
+        element.addEventListener('touchend', handleTouchRelease, { passive: false });
+        element.addEventListener('touchcancel', handleTouchRelease, { passive: false });
+
+        element.addEventListener('mousedown', (e) => {
+          if (e.button !== 0) return;
+          sound.init();
+          setPressed(true);
+        });
+
+        window.addEventListener('mouseup', () => {
+          if (activeTouches.size === 0 && input[keyName]) {
+            setPressed(false);
+          }
+        });
+      }
+
+      bindMultiTouchButton(btnThrottle, 'throttle');
+      bindMultiTouchButton(btnLeft, 'left');
+      bindMultiTouchButton(btnRight, 'right');
+
+      window.addEventListener('keydown', (e) => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+          e.preventDefault();
+        }
+
+        if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+          input.left = true;
+        } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+          input.right = true;
+        } else if (e.code === 'ArrowUp' || e.code === 'KeyW') {
+          sound.init();
+          input.throttle = true;
+        } else if (e.code === 'Enter' || e.code === 'Space') {
+          if (state.phase === 'INTRO') {
+            beginExam();
+          } else if (state.phase === 'ENDED') {
+            resetGame(true);
+          }
+        }
+        updateControlVisuals();
+      });
+
+      window.addEventListener('keyup', (e) => {
+        if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+          input.left = false;
+        } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+          input.right = false;
+        } else if (e.code === 'ArrowUp' || e.code === 'KeyW') {
+          input.throttle = false;
+        }
+        updateControlVisuals();
+      });
+
+      // ========================================================================
+      // 13. 按鈕事件：開始、重考、靜音切換
+      // ========================================================================
+      startGameBtn.addEventListener('click', beginExam);
+      retryGameBtn.addEventListener('click', () => resetGame(true));
+
+      audioToggleBtn.addEventListener('click', () => {
+        sound.muted = !sound.muted;
+        audioIcon.textContent = sound.muted ? '🔇' : '🔊';
+        audioLabel.textContent = sound.muted ? '靜音中' : '音效開';
+        if (sound.muted) {
+          sound.stopEngine();
+        } else if (state.phase === 'RUNNING') {
+          sound.startEngine();
+        }
+      });
+
+      // ========================================================================
+      // 14. 啟動遊戲引擎
+      // ========================================================================
+      resizeCanvas();
+      resetGame(false);
+      requestAnimationFrame(gameLoop);
+    });
+  </script>
+</body>
+</html>
